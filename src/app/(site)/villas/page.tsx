@@ -3,15 +3,17 @@ import VillaContent from "@/components/modules/villa/VillaContent/VillaContent";
 import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/modules/layout/container/Container";
+import Booking from "@/models/Booking";
+import Villa from "@/models/Villa";
 
 
 async function Page() {
 
+    const data = await Villa
+        .find({})
+        .lean();
 
-    const res = await fetch("http://localhost:3000/api/villa");
-
-    const {villas} = await res.json();
-
+    const villas = JSON.parse(JSON.stringify(data));
 
     return (
 
