@@ -1,0 +1,52 @@
+import React from "react";
+import VillaGridCard from "@/components/modules/villa/villacards/VillaGridCard";
+import SeeAllBtn from "@/components/modules/layout/button/SeeAllBtn";
+import { VillaType} from "@/types/Villa";
+
+
+
+async function VillaSuggest() {
+
+    const res = await fetch("http://localhost:3000/api/villa");
+
+    const { villas }: { villas: VillaType[] } = await res.json();
+
+    const suggestedVillas: VillaType[] = villas.filter(
+        (data) => data.rating > 3
+    );
+
+
+    return (
+        <section className="mx-auto my-[130px] px-4 md:my-[80px] md:px-0">
+
+            {/* Header */}
+            <div className="mb-[32px] flex items-center justify-between">
+
+                <div className="text-right">
+                    <h4 className="text-[20px] font-bold">
+                        ویلاهای ویژه
+                    </h4>
+
+                    <p className="mt-[6px] text-[15px] text-[#66727D]">
+                        بهترین پیشنهادهای ما برای شما
+                    </p>
+                </div>
+
+                <SeeAllBtn/>
+            </div>
+
+            {/* Cards */}
+            <div className="grid grid-cols-1 gap-[24px] sm:grid-cols-2 lg:grid-cols-4">
+                {
+                    suggestedVillas.map(villa => (
+                        <VillaGridCard city={villa.city} _id={villa._id} rating={villa.rating} title={villa.title}
+                                       pricePerNight={villa.pricePerNight} key={villa._id}/>
+                    ))
+                }
+            </div>
+
+        </section>
+    );
+}
+
+export default VillaSuggest;
