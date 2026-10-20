@@ -2,14 +2,17 @@ import React from "react";
 import VillaGridCard from "@/components/modules/villa/villacards/VillaGridCard";
 import SeeAllBtn from "@/components/modules/layout/button/SeeAllBtn";
 import { VillaType} from "@/types/Villa";
+import Villa from "@/models/Villa";
 
 
 
 async function VillaSuggest() {
 
-    const res = await fetch("http://localhost:3000/api/villa");
+    const data = await Villa
+        .find()
+        .lean();
 
-    const { villas }: { villas: VillaType[] } = await res.json();
+    const villas : VillaType[] = JSON.parse(JSON.stringify(data));
 
     const suggestedVillas: VillaType[] = villas.filter(
         (data) => data.rating > 3

@@ -105,7 +105,7 @@ export default function ContactForm() {
         try {
             setIsLoading(true);
 
-            const res = await fetch("http://localhost:3000/api/contact", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/contact`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -161,7 +161,6 @@ export default function ContactForm() {
             setIsLoading(false);
         }
     };
-
     return (
         <div className="rounded-[10px] border border-gray-200 bg-white p-4 sm:p-5 md:p-6">
 
