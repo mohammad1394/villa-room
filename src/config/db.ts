@@ -9,7 +9,7 @@ const connectToDB = async () => {
             return;
         }
         if (!process.env.MONGODB_URL) {
-            throw new Error("MONGODB_URI is not defined");
+            throw new Error("MONGODB_URL is not defined");
         }
 
         await mongoose.connect(process.env.MONGODB_URL);
@@ -18,6 +18,7 @@ const connectToDB = async () => {
 
     } catch (err) {
         console.log("DB connection error:", err);
+        throw err;
     }
 };
 
