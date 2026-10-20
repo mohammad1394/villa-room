@@ -3,10 +3,13 @@ import VillaGridCard from "@/components/modules/villa/villacards/VillaGridCard";
 import SeeAllBtn from "@/components/modules/layout/button/SeeAllBtn";
 import { VillaType} from "@/types/Villa";
 import Villa from "@/models/Villa";
+import connectToDB from "@/config/db";
 
 
 
 async function VillaSuggest() {
+
+    await connectToDB();
 
     const data = await Villa
         .find()

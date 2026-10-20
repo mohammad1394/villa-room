@@ -161,6 +161,8 @@ export default function ContactForm() {
             setIsLoading(false);
         }
     };
+
+    console.log(process.env.NEXT_PUBLIC_MONGODB_URL)
     return (
         <div className="rounded-[10px] border border-gray-200 bg-white p-4 sm:p-5 md:p-6">
 

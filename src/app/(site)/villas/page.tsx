@@ -3,10 +3,12 @@ import VillaContent from "@/components/modules/villa/VillaContent/VillaContent";
 
 import Container from "@/components/modules/layout/container/Container";
 import Villa from "@/models/Villa";
+import connectToDB from "@/config/db";
 
 
 async function Page() {
 
+    await connectToDB();
 
     const data = await Villa
         .find()
@@ -18,9 +20,9 @@ async function Page() {
     return (
 
             <Container className={"my-10"}>
-
-                {/*villa Cards*/}
-                <VillaContent villas={villas}/>
+                 hello
+                {/*/!*villa Cards*!/*/}
+                {/*<VillaContent villas={villas}/>*/}
 
             </Container>
 

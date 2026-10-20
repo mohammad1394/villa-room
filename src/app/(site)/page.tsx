@@ -11,9 +11,6 @@ import UserModel from "@/models/User";
 export default async function Home() {
 
 
-
-
-
     return (
 
 
