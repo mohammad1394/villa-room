@@ -60,7 +60,7 @@ const ticketSchema = new mongoose.Schema(
 
         lastMessageBy: {
             type: String,
-            enum: ["user", "support"],
+            enum: ["User", "Support"],
         },
 
         closedAt: {
