@@ -6,27 +6,27 @@ import PopularDestinationCard from "@/components/modules/PopularDestinationCard/
 function PopularDestination() {
     const destinationData =[
         {
-            imageurl : "/assets/kelarDasht.jpg",
+            imageurl : "/assets/public-destination/kelardasht.webp",
             title : "کلاردشت",
             villacount : "86"
         },
         {
-            imageurl : "/assets/kelarDasht.jpg",
+            imageurl : "/assets/public-destination/noshahr.webp",
             title : "نوشهر",
             villacount : "36"
         },
         {
-            imageurl : "/assets/kelarDasht.jpg",
+            imageurl : "/assets/public-destination/ramsar.webp",
             title : "رامسر",
             villacount : "22"
         },
         {
-            imageurl : "/assets/kelarDasht.jpg",
+            imageurl : "/assets/public-destination/babolsar.webp",
             title : "بابلسر",
             villacount : "76"
         },
         {
-            imageurl : "/assets/kelarDasht.jpg",
+            imageurl : "/assets/public-destination/motelgho.webp",
             title : "متل قو",
             villacount : "130"
         },

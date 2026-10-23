@@ -6,6 +6,8 @@ import Review from "@/models/Review";
 import {cookies} from "next/headers";
 import {verifyAccessToken} from "@/utility/auth";
 import UserModel from "@/models/User";
+import {getCurrentUser} from "@/utility/getCurrentUser";
+import user from "@/models/User";
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,8 +15,19 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
 
+        const currentUser = await getCurrentUser();
+
+        if (!currentUser) {
+            return NextResponse.json(
+                {
+                    message: "لطفا برای ثبت رزرو وارد حساب کاربری خود شوید",
+                },
+                {
+                    status: 403,
+                }
+            );
+        }
         const {
-            userId,
             villaId,
             checkIn,
             checkOut,
@@ -23,7 +36,6 @@ export async function POST(req: NextRequest) {
 
 
         if (
-            !userId ||
             !villaId ||
             !checkIn ||
             !checkOut ||
@@ -171,7 +183,7 @@ export async function POST(req: NextRequest) {
 
 
         const newBooking = await Booking.create({
-            userId,
+            userId : currentUser._id ,
             villaId,
             checkIn: startDate,
             checkOut: endDate,

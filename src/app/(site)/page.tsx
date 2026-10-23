@@ -14,9 +14,9 @@ export default async function Home() {
     return (
 
 
-        <div className={"mx-auto w-[100%] bg-[#F5F7F8]"}>
+        <div className={"mx-auto w-[100%] "}>
             <Hero/>
-            <Container>
+            <Container className={"mt-50 lg:mt-30"}>
                 <VillaSuggest/>
                 <WhyUs/>
                 <PopularDestination/>

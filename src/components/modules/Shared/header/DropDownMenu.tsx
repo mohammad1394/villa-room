@@ -1,10 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Heart, LayoutDashboard, LogOut, ReceiptText, Train} from "lucide-react";
 import {useRouter} from "next/navigation";
+import {showCustomToast} from "@/components/modules/layout/toast/toast";
 
 type User = {
     _id: string;
     fullName: string;
+    role : "Admin" | "User"
 };
 
 interface NavbarActionsProps {
@@ -13,13 +15,51 @@ interface NavbarActionsProps {
     setIsOpen: (isOpen: boolean) => void;
 }
 
-function DropDownMenu({isOpen, setIsOpen ,  user}: NavbarActionsProps) {
+function DropDownMenu({isOpen, setIsOpen, user}: NavbarActionsProps) {
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const handleNavigate = (path: string) => {
-
         setIsOpen(!isOpen);
         router.push(path)
     }
+
+
+    const handleLogout = async () => {
+
+
+        if (isLoading)
+            return;
+
+        setIsLoading(true);
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/logout`, {
+                method: "DELETE",
+            });
+
+            if (response.ok) {
+                showCustomToast(
+                    "موفق",
+                    "شما با موفقیت خارج شدید",
+                    "check",
+                    "success"
+                );
+                console.log("hello")
+                router.refresh();
+            }
+        } catch (error) {
+            console.error(error);
+
+            showCustomToast(
+                "خطا",
+                "خطایی هنگام خروج از حساب رخ داد",
+                "x",
+                "error"
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
     return (
         <div
             className={`
@@ -41,19 +81,33 @@ function DropDownMenu({isOpen, setIsOpen ,  user}: NavbarActionsProps) {
 
                 </p>
             </div>
+            {
+                user?.role === "Admin" ? (
+                    <button
+                        onClick={() => handleNavigate("/panel")}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
+                    >
+                        <LayoutDashboard size={18} className="text-gray-400"/>
+                        پنل مدیریت
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => handleNavigate("/panel")}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
+                    >
+                        <LayoutDashboard size={18} className="text-gray-400"/>
+                        پنل کاربری
+                    </button>
+                )
+            }
+
+
             <button
-                onClick={() => handleNavigate("/panel")}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
-            >
-                <LayoutDashboard size={18} className="text-gray-400"/>
-                پنل کاربری
-            </button>
-            <button
-                onClick={() => handleNavigate("/panel/my-booking")}
+                onClick={() => handleNavigate("/panel/my-bookings")}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
             >
                 <Train size={18} className="text-gray-400"/>
-                رزرو من
+                رزروهای من
             </button>
             <button
                 onClick={() => handleNavigate("/panel/my-payment")}
@@ -63,14 +117,14 @@ function DropDownMenu({isOpen, setIsOpen ,  user}: NavbarActionsProps) {
                 تراکنش های من
             </button>
             <button
-                onClick={() => handleNavigate("/panel/wishlist")}
+                onClick={() => handleNavigate("/panel/my-wishlist")}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
             >
                 <Heart size={18} className="text-gray-400"/>
                 مورد علاقه
             </button>
             <button
-                onClick={() => handleNavigate("/userPanel")}
+                onClick={handleLogout}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
             >
                 <LogOut size={18} className="text-gray-400"/>

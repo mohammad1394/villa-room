@@ -9,6 +9,7 @@ import DropDownMenu from "@/components/modules/Shared/header/DropDownMenu";
 type User = {
     _id: string;
     fullName: string;
+    role : "Admin" | "User"
 };
 
 interface NavbarActionsProps {
@@ -58,7 +59,7 @@ function NavbarActions({user}: NavbarActionsProps) {
 
 
             <Link
-                href="/villas/register"
+                href="/villas"
                 className="hidden h-[44px] items-center justify-center rounded-[10px] bg-[var(--primary)] px-[16px] py-[24px] text-[13px] font-medium text-white transition-colors hover:bg-[#2D4658] md:flex"
             >
                 رزرو ویلا

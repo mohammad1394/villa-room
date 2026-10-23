@@ -1,4 +1,5 @@
 import Image from "next/image";
+import mongoose from "mongoose";
 import Gallery from "@/components/templates/villadetails/Gallery";
 import BookingCard from "@/components/templates/villadetails/BookingCard";
 import VillaInfoTabs from "@/components/templates/villadetails/VillaInfoTabs";
@@ -9,14 +10,16 @@ import React from "react";
 import {notFound} from "next/navigation";
 import RelatedVillas from "@/components/templates/villadetails/RelatedVillas";
 
-async function Page({
-                        params,
-                    }: {
-    params: Promise<{ id: string }>
-}) {
+async function Page({params}: { params: Promise<{ id: string }> }) {
 
     await connectToDB();
     const {id} = await params;
+
+
+
+    if (!mongoose.isValidObjectId(id)) {
+        return notFound();
+    }
 
     const villa = await Villa.findOne({_id: id}).lean();
 
@@ -195,7 +198,7 @@ async function Page({
 
 
                 {/*my-bookings*/}
-                <BookingCard/>
+                <BookingCard villaId = {id}/>
 
             </div>
 

@@ -43,12 +43,15 @@ function VillaGridCard({
             {/* Image */}
             <div className="relative h-[190px] w-full">
 
+                <Link href={`/villas/${_id}`}>
+
                 <Image
                     src="/assets/herobg.jpg"
                     alt={"hello"}
                     fill
                     className="object-cover object-center"
                 />
+                </Link>
 
                 {/* Favorite */}
                 <AddToWishList villaId={_id.toString()} />
@@ -92,9 +95,9 @@ function VillaGridCard({
                     pt-[16px]
                 "
             >
-                <p className="text-[16px] font-bold">
+                <Link href={`/villas/${_id}`} className="text-[16px] font-bold">
                     {title}
-                </p>
+                </Link>
 
                 <p
                     className="

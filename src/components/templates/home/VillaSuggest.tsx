@@ -23,7 +23,7 @@ async function VillaSuggest() {
 
 
     return (
-        <section className="mx-auto my-[130px] px-4 md:my-[80px] md:px-0">
+        <section className="mx-auto my-[130px]  px-4 md:my-[80px] md:px-0">
 
             {/* Header */}
             <div className="mb-[32px] flex items-center justify-between">

@@ -11,10 +11,6 @@ const links = [
         href: "/villas",
     },
     {
-        title: "تخفیف‌ها",
-        href: "/discounts",
-    },
-    {
         title: "راهنما",
         href: "/guide",
     },
@@ -24,7 +20,7 @@ const links = [
     },
     {
         title: "تماس با ما",
-        href: "/contact",
+        href: "/contact-us",
     },
 ];
 

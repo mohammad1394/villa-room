@@ -13,6 +13,11 @@
     --border: #E1E5E8;
     --shadow-me:  0 10px 35px rgba(0,0,0,.12);
 }
+
+body{
+    background-color: #F5F7F8
+}
+
 .range-slider {
     appearance: none;
     background: transparent;

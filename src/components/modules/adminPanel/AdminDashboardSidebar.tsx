@@ -96,7 +96,7 @@ export default function DashboardSidebar() {
 
         try {
             const response = await fetch("/api/auth/logout", {
-                method: "POST",
+                method: "DELETE",
             });
 
             if (response.ok) {

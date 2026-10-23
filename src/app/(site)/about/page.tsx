@@ -76,12 +76,11 @@ function AboutVillaRoom() {
                         className="object-cover"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-l from-[#172B3A]/90 via-[#172B3A]/55 to-transparent" />
-
+                    <div className="absolute inset-0 bg-gradient-to-l bg-slate-900" />
+                    <div className="absolute inset-0 bg-gradient-to-l from-slate-950/90 via-slate-900/75 to-slate-800/35" />
                     <div className="relative z-10 flex h-full items-center">
                         <div className="w-full max-w-[650px] px-7 sm:px-12 lg:px-16">
                             <div className="mb-5 flex items-center gap-2 text-[13px] font-bold text-white/80">
-                                <span className="h-2 w-2 rounded-full bg-[#C79B58]" />
                                 درباره ویلاروم
                             </div>
 

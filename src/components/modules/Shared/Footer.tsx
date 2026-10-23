@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    Home,
+    Home, MessageCircle,
     Send,
 } from "lucide-react";
 
@@ -123,17 +123,6 @@ function Footer() {
 
                     {/* شبکه های اجتماعی */}
                     <div className="flex gap-3">
-                        <div className="
-                            flex
-                            h-9
-                            w-9
-                            sm:h-10
-                            sm:w-10
-                            items-center
-                            justify-center
-                            rounded-full
-                            bg-white/10
-                        " />
 
                         <div className="
                             flex
@@ -147,7 +136,7 @@ function Footer() {
                             bg-white/10
                             "
                         >
-                            <Send size={18} />
+                            <MessageCircle size={18}/>
                         </div>
 
                         <div className="
@@ -164,21 +153,6 @@ function Footer() {
                         >
                         <Send size={18} />
                     </div>
-
-                    <div className="
-                            flex
-                            h-9
-                            w-9
-                            sm:h-10
-                            sm:w-10
-                            items-center
-                            justify-center
-                            rounded-full
-                            bg-white/10
-                            "
-                        >
-                            <Send size={18} />
-                        </div>
                     </div>
                 </div>
 

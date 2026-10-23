@@ -20,9 +20,9 @@ async function Page() {
     return (
 
             <Container className={"my-10"}>
-                 hello
-                {/*/!*villa Cards*!/*/}
-                {/*<VillaContent villas={villas}/>*/}
+
+                {/*villa Cards*/}
+                <VillaContent villas={villas}/>
 
             </Container>
 

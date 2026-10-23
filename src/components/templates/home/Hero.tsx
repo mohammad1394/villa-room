@@ -9,7 +9,7 @@ function Hero() {
             <div className="absolute inset-0 bg-[rgba(20,30,40,0.35)]"></div>
 
             {/*Content*/}
-            <div className="relative z-10 mx-auto flex h-full w-[80%] items-center justify-start">
+            <div className="relative z-10 mx-auto flex h-full w-[80%] md:items-center md:justify-start pt-10  items-start">
                 <div className="w-[80%] lg:w-[50%] text-right text-white">
 
                     <p className="text-[30px] lg:text-[48px] font-bold leading-[1.4]">
