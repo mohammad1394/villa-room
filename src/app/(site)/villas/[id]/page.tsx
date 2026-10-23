@@ -198,7 +198,7 @@ async function Page({params}: { params: Promise<{ id: string }> }) {
 
 
                 {/*my-bookings*/}
-                <BookingCard villaId = {id}/>
+                <BookingCard/>
 
             </div>
 

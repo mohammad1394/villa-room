@@ -52,7 +52,7 @@ const getNightCount = (
 
 export default function BookingPage() {
     const params = useParams<{ id: string }>();
-    const searchParams = useSearchParams<{checkIn : DateObject , checkOut : DateObject , guests : number}>();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const villaId = params.id;
 
@@ -178,7 +178,7 @@ export default function BookingPage() {
             return;
         }
 
-        if (guests < 1 || guests > maxGuests) {
+        if (guests < 1 ) {
             setError(`ظرفیت این ویلا حداکثر ${maxGuests} نفر است.`);
             return;
         }
@@ -413,7 +413,7 @@ export default function BookingPage() {
                                             تعداد مهمان‌ها
                                         </h2>
                                         <p className="mt-1 text-xs text-gray-500">
-                                            ظرفیت مجاز ویلا {formatPrice(maxGuests)} نفر است.
+                                            ظرفیت مجاز ویلا {formatPrice(villa.capacity)} نفر است.
                                         </p>
                                     </div>
                                 </div>
@@ -447,9 +447,9 @@ export default function BookingPage() {
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setGuests((value) => Math.min(maxGuests, value + 1))
+                                                setGuests((value) => Math.min(guests, value + 1))
                                             }
-                                            disabled={guests >= maxGuests}
+                                            disabled={guests >= villa.capacity}
                                             aria-label="افزایش تعداد مهمان"
                                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                                         >
