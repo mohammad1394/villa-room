@@ -39,6 +39,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import {showCustomToast} from "@/components/modules/layout/toast/toast";
+import {Field} from "@/components/modules/adminPanel/createVilla/Field";
 
 const villaTypes = [
     {
@@ -101,12 +102,6 @@ const amenitiesList: {
     },
 ];
 
-type Province = {
-    _id: string;
-    title: string;
-    slug: string;
-    cities: string[];
-};
 
 const input =
     "h-11 w-full rounded-xl border bg-white px-4 text-sm text-[var(--text-primary)] outline-none transition " +
@@ -117,46 +112,6 @@ const okBorder = "border-[var(--border)]";
 const badBorder =
     "border-[#B42318] bg-[#FEF3F2]";
 
-function Field({
-                   id,
-                   label,
-                   error,
-                   children,
-                   className = "",
-               }: {
-    id: string;
-    label: string;
-    error?: string;
-    children: React.ReactNode;
-    className?: string;
-}) {
-    return (
-        <div className={className}>
-            <label
-                htmlFor={`f-${id}`}
-                className="mb-2 block text-xs font-semibold text-[var(--text-primary)]"
-            >
-                {label}
-
-                <span className="mr-1 text-[#B42318]">
-                    *
-                </span>
-            </label>
-
-            {children}
-
-            {error && (
-                <p
-                    id={`f-${id}-err`}
-                    className="mt-1.5 flex items-center gap-1.5 text-xs text-[#B42318]"
-                >
-                    <AlertCircle size={13}/>
-                    {error}
-                </p>
-            )}
-        </div>
-    );
-}
 
 export default function VillaForm() {
     const router = useRouter();
@@ -167,27 +122,20 @@ export default function VillaForm() {
     const [province, setProvince] = useState("");
     const [city, setCity] = useState("");
     const [address, setAddress] = useState("");
-    const [pricePerNight, setPricePerNight] =
-        useState("");
+    const [pricePerNight, setPricePerNight] = useState("");
 
     const [capacity, setCapacity] = useState(0);
     const [bedrooms, setBedrooms] = useState(0);
     const [bathrooms, setBathrooms] = useState(0);
 
-    const [amenities, setAmenities] = useState<
-        string[]
-    >([]);
+    const [amenities, setAmenities] = useState<string[]>([]);
 
     const [images, setImages] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>(
-        []
-    );
+    const [previews, setPreviews] = useState<string[]>([]);
 
     const [dragging, setDragging] = useState(false);
 
-    const [provinces, setProvinces] = useState<
-        Province[]
-    >([]);
+    const [provinces, setProvinces] = useState<ProvinceType[]>([]);
 
     const [loadingProvinces, setLoadingProvinces] =
         useState(true);
@@ -447,7 +395,7 @@ export default function VillaForm() {
     };
 
     const makeMain = (index: number) => {
-        const moveFirst = <T,>(
+        const moveFirst = <T, >(
             array: T[]
         ) => [
             array[index],
@@ -708,10 +656,12 @@ export default function VillaForm() {
                     <div className="space-y-5">
 
                         {/* IMAGES */}
-                        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-me)]">
+                        <section
+                            className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-me)]">
 
                             <div className="mb-5 flex items-center gap-2">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EAF0F4] text-[var(--primary)]">
+                                <div
+                                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EAF0F4] text-[var(--primary)]">
                                     <Camera
                                         size={19}
                                     />
@@ -749,7 +699,8 @@ export default function VillaForm() {
                                             : "border-[var(--border)] bg-[var(--surface-secondary)] hover:border-[var(--primary)] hover:bg-[#F5F9FA]"
                                 }`}
                             >
-                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[var(--accent)] shadow-sm">
+                                <div
+                                    className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[var(--accent)] shadow-sm">
                                     <Upload
                                         size={25}
                                     />
@@ -809,7 +760,7 @@ export default function VillaForm() {
                                                         index
                                                     )
                                                 }
-                                                className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white/95 text-[#64748b] shadow-sm transition hover:bg-red-50 hover:text-red-500"
+                                                className="absolute top-2 right-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-white/95 text-[#64748b] shadow-sm transition hover:bg-red-50 hover:text-red-500"
                                             >
                                                 <Trash2
                                                     size={
@@ -820,7 +771,8 @@ export default function VillaForm() {
 
                                             {index ===
                                                 0 && (
-                                                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-[var(--primary)] px-2 py-1 text-[9px] font-medium text-white">
+                                                    <div
+                                                        className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-[var(--primary)] px-2 py-1 text-[9px] font-medium text-white">
                                                         <Star
                                                             size={
                                                                 10
@@ -851,7 +803,8 @@ export default function VillaForm() {
 
                                 {previews.length <
                                     5 && (
-                                        <label className="flex h-[105px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)]">
+                                        <label
+                                            className="flex h-[105px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)]">
 
                                             <ImagePlus
                                                 size={
@@ -877,7 +830,8 @@ export default function VillaForm() {
                             </div>
 
                             {/* TIPS */}
-                            <div className="mt-5 rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 p-4">
+                            <div
+                                className="mt-5 rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 p-4">
                                 <div className="mb-3 flex items-center gap-2 text-[var(--primary)]">
                                     <Check
                                         size={
@@ -1047,7 +1001,8 @@ export default function VillaForm() {
                     </div>
 
                     {/* ================= RIGHT ================= */}
-                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-me)]">
+                    <div
+                        className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-me)]">
 
                         {/* BASIC INFORMATION */}
                         <section>
@@ -1159,7 +1114,7 @@ export default function VillaForm() {
                                             size={
                                                 17
                                             }
-                                            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                            className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[var(--text-secondary)]"
                                         />
                                     </div>
                                 </Field>
@@ -1234,7 +1189,7 @@ export default function VillaForm() {
                                             size={
                                                 17
                                             }
-                                            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                            className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[var(--text-secondary)]"
                                         />
                                     </div>
                                 </Field>
@@ -1305,7 +1260,7 @@ export default function VillaForm() {
                                             size={
                                                 17
                                             }
-                                            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                            className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[var(--text-secondary)]"
                                         />
                                     </div>
                                 </Field>
@@ -1324,7 +1279,7 @@ export default function VillaForm() {
                                             size={
                                                 18
                                             }
-                                            className="absolute right-4 top-3 text-[var(--text-secondary)]"
+                                            className="absolute top-3 right-4 text-[var(--text-secondary)]"
                                         />
 
                                         <input
@@ -1399,7 +1354,8 @@ export default function VillaForm() {
                                             }`}
                                         />
 
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">
+                                        <span
+                                            className="absolute top-1/2 left-3 -translate-y-1/2 text-xs text-[var(--text-secondary)]">
                                             تومان
                                         </span>
                                     </div>
@@ -1418,7 +1374,7 @@ export default function VillaForm() {
                                             size={
                                                 17
                                             }
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                            className="absolute top-1/2 right-4 -translate-y-1/2 text-[var(--text-secondary)]"
                                         />
 
                                         <input
@@ -1470,7 +1426,7 @@ export default function VillaForm() {
                                             size={
                                                 17
                                             }
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                            className="absolute top-1/2 right-4 -translate-y-1/2 text-[var(--text-secondary)]"
                                         />
 
                                         <input
@@ -1522,7 +1478,7 @@ export default function VillaForm() {
                                             size={
                                                 17
                                             }
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                            className="absolute top-1/2 right-4 -translate-y-1/2 text-[var(--text-secondary)]"
                                         />
 
                                         <input
@@ -1535,8 +1491,7 @@ export default function VillaForm() {
                                                 bathrooms ||
                                                 ""
                                             }
-                                            onChange={(event) =>
-                                            {
+                                            onChange={(event) => {
                                                 setBathrooms(Math.max(0, Number(event.target.value)))
                                             }
                                             }
@@ -1689,7 +1644,8 @@ export default function VillaForm() {
                                 }`}
                             >
                                 {/* TOOLBAR */}
-                                <div className="flex h-11 items-center gap-5 border-b border-[var(--border)] bg-[var(--surface-secondary)] px-4 text-[var(--text-secondary)]">
+                                <div
+                                    className="flex h-11 items-center gap-5 border-b border-[var(--border)] bg-[var(--surface-secondary)] px-4 text-[var(--text-secondary)]">
                                     <button
                                         type="button"
                                         className="font-bold"
@@ -1822,7 +1778,8 @@ export default function VillaForm() {
                 </div>
 
                 {/* BOTTOM BAR */}
-                <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-white/95 backdrop-blur">
+                <div
+                    className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-white/95 backdrop-blur">
                     <div className="mx-auto flex max-w-[1360px] items-center gap-4 px-5 py-3 lg:px-8">
 
                         <div className="hidden flex-1 items-center gap-3 sm:flex">

@@ -12,17 +12,12 @@ export const verifyPassword = async (password : string , hashedPassword :string)
     const isValid = await compare(password , hashedPassword);
     return isValid;
 }
-export const generateAccessToken = (data: { email: string }) => {
-    const secret = process.env.ACCESSSTOKENSECRETKEY;
-
-    if (!secret) {
-        throw new Error("ACCESSSTOKENSECRETKEY is missing");
-    }
-
-    return sign({ ...data }, secret, {
-        expiresIn: "60d",
+export  const generateAccessToken = (data :  { email: string }) => {
+    const token = sign({...data} , process.env.ACCESSSTOKENSECRETKEY , {
+        expiresIn : "60d"
     });
-};
+    return token;
+}
 export const verifyAccessToken = (token: string) => {
     try {
         const tokenPayload = verify(token , process.env.ACCESSSTOKENSECRETKEY);
