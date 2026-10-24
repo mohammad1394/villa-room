@@ -9,6 +9,7 @@ import Villa from "@/models/Villa";
 import React from "react";
 import {notFound} from "next/navigation";
 import RelatedVillas from "@/components/templates/villadetails/RelatedVillas";
+import {VillaType} from "@/types/Villa";
 
 async function Page({params}: { params: Promise<{ id: string }> }) {
 
@@ -21,13 +22,13 @@ async function Page({params}: { params: Promise<{ id: string }> }) {
         return notFound();
     }
 
-    const villa = await Villa.findOne({_id: id}).lean();
+    const villa = await Villa.findOne({_id: id} , "-__v").lean();
 
     if (!villa) {
         return notFound();
     }
 
-    const villaInfo = {
+    const villaInfo : VillaType = {
         ...villa,
         _id: villa._id.toString(),
     };
@@ -55,7 +56,7 @@ async function Page({params}: { params: Promise<{ id: string }> }) {
                     className="relative h-[300px] w-full overflow-hidden rounded-2xl sm:h-[380px] lg:absolute lg:top-0 lg:left-0 lg:h-full lg:w-[75%]"
                 >
                     <Image
-                        src="/assets/herobg.jpg"
+                        src= {villaInfo?.images[0]}
                         alt="ویلا لوکس در متل قو"
                         fill
                         priority
@@ -192,7 +193,7 @@ async function Page({params}: { params: Promise<{ id: string }> }) {
 
                 {/*Gallery*/}
                 <div className="w-full lg:w-[70%]">
-                    <Gallery/>
+                    <Gallery images = {villaInfo.images}/>
                     <VillaInfoTabs villaInfo={villaInfo}/>
                 </div>
 

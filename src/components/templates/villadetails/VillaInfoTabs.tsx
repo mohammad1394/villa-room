@@ -5,19 +5,10 @@ import {useState} from "react";
 import Amenities from "@/components/templates/villadetails/tabs/Amenities";
 import Rules from "@/components/templates/villadetails/tabs/Rules";
 import Review from "@/components/templates/villadetails/tabs/Review";
+import {VillaType} from "@/types/Villa";
 
-interface Villa {
-    _id : string;
-    bathrooms: number;
-    description: string;
-    amenities: string[];
-    rating: number;
-    capacity : number;
-    reviewsCount : number;
-    __v: number;
-}
 
-function VillaInfoTabs({ villaInfo  }: { villaInfo: Villa } ) {
+function VillaInfoTabs({ villaInfo  }: { villaInfo: VillaType } ) {
 
     const [activeTab, setActiveTab] = useState("about");
 
