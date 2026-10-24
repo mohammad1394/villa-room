@@ -5,11 +5,11 @@ import Link from "next/link";
 import {VillaType} from "@/types/Villa";
 
 
-function VillaListCard({pricePerNight , title , city , bedrooms , bathrooms, capacity } : VillaType) {
+function VillaListCard({pricePerNight , title , city , bedrooms , bathrooms, capacity , images } : VillaType) {
     return (
         <div className={"w-full h-[400px] md:h-[210px]  bg-white flex flex-col md:flex-row gap-5 rounded-xl"}>
             <div className={"relative"}>
-                <Image src={"/assets/herobg.jpg"} alt={""} width={400} height={400}
+                <Image src={images[0]} alt={""} width={400} height={400}
                        className={"h-full w-[250px] rounded-xl object-cover"}/>
                     <div
                         className="

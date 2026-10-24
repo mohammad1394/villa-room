@@ -5,14 +5,8 @@ import { Heart, MapPin, Star } from "lucide-react";
 import { showCustomToast } from "@/components/modules/layout/toast/toast";
 import AddToWishList from "@/components/modules/villa/AddToWishList/AddToWishList";
 import Link from "next/link";
+import {VillaType} from "@/types/Villa";
 
-type RelatedVilla = {
-    _id: string;
-    city: string;
-    pricePerNight: number;
-    rating: number;
-    title: string;
-};
 
 function VillaGridCard({
                        _id,
@@ -20,7 +14,8 @@ function VillaGridCard({
                        title,
                        city,
                        pricePerNight,
-                   }: RelatedVilla) {
+                        images
+                   }: VillaType) {
 
 
 
@@ -46,7 +41,7 @@ function VillaGridCard({
                 <Link href={`/villas/${_id}`}>
 
                 <Image
-                    src="/assets/herobg.jpg"
+                    src={images[0]}
                     alt={"hello"}
                     fill
                     className="object-cover object-center"
