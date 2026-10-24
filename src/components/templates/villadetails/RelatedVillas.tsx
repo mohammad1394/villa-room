@@ -8,17 +8,12 @@ import "swiper/css/pagination";
 
 import {Pagination} from "swiper/modules";
 import VillaGridCard from "@/components/modules/villa/villacards/VillaGridCard";
+import {VillaType} from "@/types/Villa";
 
-type RelatedVilla = {
-    _id: string;
-    city: string;
-    pricePerNight: number;
-    rating: number;
-    title: string;
-};
+
 
 type RelatedVillasProps = {
-    relatedVillas: RelatedVilla[];
+    relatedVillas: VillaType[];
 };
 
 function RelatedVillas({relatedVillas}: RelatedVillasProps) {

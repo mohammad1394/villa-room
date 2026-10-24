@@ -12,7 +12,7 @@ async function VillaSuggest() {
     await connectToDB();
 
     const data = await Villa
-        .find()
+        .find({} , "rating title city pricePerNight images")
         .lean();
 
     const villas : VillaType[] = JSON.parse(JSON.stringify(data));
@@ -45,8 +45,7 @@ async function VillaSuggest() {
             <div className="grid grid-cols-1 gap-[24px] sm:grid-cols-2 lg:grid-cols-4">
                 {
                     suggestedVillas.map(villa => (
-                        <VillaGridCard city={villa.city} _id={villa._id} rating={villa.rating} title={villa.title}
-                                       pricePerNight={villa.pricePerNight} key={villa._id}/>
+                        <VillaGridCard {...villa}/>
                     ))
                 }
             </div>
