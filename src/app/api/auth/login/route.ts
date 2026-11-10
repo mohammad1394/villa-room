@@ -30,8 +30,6 @@ export async function POST(req : NextRequest){
         const user = await UserModel.findOne({email : cleanEmail});
 
 
-
-
         if (!user) {
             return NextResponse.json({message : "کاربری با ایمیل مورد نظر یافت نشد "} , {status : 404});
         }
@@ -49,9 +47,9 @@ export async function POST(req : NextRequest){
             return NextResponse.json({message : "ایمیل یا رمز کاربری صحیح نمیباشد"} , {status : 422});
         }
 
-        const accessToken = generateAccessToken({email});
+        const accessToken = generateAccessToken({email : cleanEmail});
 
-        const refreshToken = generateRefreshToken({email});
+        const refreshToken = generateRefreshToken({email : cleanEmail});
 
         await UserModel.findOneAndUpdate({email} , {
             $set : {
@@ -79,7 +77,7 @@ export async function POST(req : NextRequest){
 
     }
     catch(err){
-        console.log("login error =>" ,  err)
+        console.log("Register error =>" ,  err)
 
         return NextResponse.json(
             {message: "خطایی در سرور رخ داد"},
