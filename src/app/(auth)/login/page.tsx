@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -30,43 +31,52 @@ function Page() {
     const [showPassword, setShowPassword] = useState(false);
     const [isOtpLogin, setIsOtpLogin] = useState(false);
 
+    // Login form: Email + Password
     const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors, isSubmitting },
-    } = useForm<LoginFormValues | OtpLoginFormValues>({
-        resolver: zodResolver(
-            isOtpLogin ? OtpLoginValidator : LoginValidator
-        ),
+        register: registerLogin,
+        handleSubmit: handleLoginSubmit,
+        reset: resetLogin,
+        formState: {
+            errors: loginErrors,
+            isSubmitting: isLoginSubmitting,
+        },
+    } = useForm<LoginFormValues>({
+        resolver: zodResolver(LoginValidator),
         mode: "onTouched",
         defaultValues: {
             email: "",
             password: "",
+        },
+    });
+
+    // OTP form: Phone Number
+    const {
+        register: registerOtp,
+        handleSubmit: handleOtpSubmit,
+        reset: resetOtp,
+        formState: {
+            errors: otpErrors,
+            isSubmitting: isOtpSubmitting,
+        },
+    } = useForm<OtpLoginFormValues>({
+        resolver: zodResolver(OtpLoginValidator),
+        mode: "onTouched",
+        defaultValues: {
             phoneNumber: "",
         },
     });
 
+    // Change login method
     const changeLoginMode = (otpMode: boolean) => {
         setIsOtpLogin(otpMode);
         setShowPassword(false);
-        reset();
+
+        resetLogin();
+        resetOtp();
     };
 
-    const formSubmitting = async (
-        data: LoginFormValues | OtpLoginFormValues
-    ) => {
-        if (isOtpLogin) {
-            const otpData = data as OtpLoginFormValues;
-
-
-            router.push("verify-otp")
-
-            return;
-        }
-
-        const loginData = data as LoginFormValues;
-
+    // Login with email and password
+    const formSubmitting = async (data: LoginFormValues) => {
         try {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
@@ -74,8 +84,8 @@ function Page() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email: loginData.email,
-                    password: loginData.password,
+                    email: data.email,
+                    password: data.password,
                 }),
             });
 
@@ -109,6 +119,11 @@ function Page() {
                 "error"
             );
         }
+    };
+
+    // Login with OTP
+    const otpFormSubmitting = () => {
+        router.push("verify-otp");
     };
 
     return (
@@ -146,7 +161,11 @@ function Page() {
                         {/* Login Form */}
                         <form
                             className="flex flex-col gap-5"
-                            onSubmit={handleSubmit(formSubmitting)}
+                            onSubmit={
+                                isOtpLogin
+                                    ? handleOtpSubmit(otpFormSubmitting)
+                                    : handleLoginSubmit(formSubmitting)
+                            }
                             noValidate
                         >
 
@@ -178,8 +197,8 @@ function Page() {
                                             type="tel"
                                             autoComplete="tel"
                                             placeholder="شماره موبایل خود را وارد کنید"
-                                            {...register("phoneNumber")}
-                                            aria-invalid={!!errors.phoneNumber}
+                                            {...registerOtp("phoneNumber")}
+                                            aria-invalid={!!otpErrors.phoneNumber}
                                             className="h-[48px] w-full rounded-[9px] border border-[var(--border)] bg-white px-[14px] pr-[42px] text-[13px] text-[var(--text-primary)] transition outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/10"
                                         />
                                     ) : (
@@ -188,22 +207,22 @@ function Page() {
                                             type="email"
                                             autoComplete="email"
                                             placeholder="ایمیل خود را وارد کنید"
-                                            {...register("email")}
-                                            aria-invalid={!!errors.email}
+                                            {...registerLogin("email")}
+                                            aria-invalid={!!loginErrors.email}
                                             className="h-[48px] w-full rounded-[9px] border border-[var(--border)] bg-white px-[14px] pr-[42px] text-[13px] text-[var(--text-primary)] transition outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/10"
                                         />
                                     )}
                                 </div>
 
-                                {isOtpLogin && errors.phoneNumber && (
+                                {isOtpLogin && otpErrors.phoneNumber && (
                                     <p className="mt-1 text-xs text-red-500">
-                                        {errors.phoneNumber.message}
+                                        {otpErrors.phoneNumber.message}
                                     </p>
                                 )}
 
-                                {!isOtpLogin && errors.email && (
+                                {!isOtpLogin && loginErrors.email && (
                                     <p className="mt-1 text-xs text-red-500">
-                                        {errors.email.message}
+                                        {loginErrors.email.message}
                                     </p>
                                 )}
                             </div>
@@ -229,8 +248,8 @@ function Page() {
                                             type={showPassword ? "text" : "password"}
                                             autoComplete="current-password"
                                             placeholder="رمز عبور خود را وارد کنید"
-                                            {...register("password")}
-                                            aria-invalid={!!errors.password}
+                                            {...registerLogin("password")}
+                                            aria-invalid={!!loginErrors.password}
                                             className="h-[48px] w-full rounded-[9px] border border-[var(--border)] bg-white px-[42px] text-[13px] text-[var(--text-primary)] transition outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/10"
                                         />
 
@@ -254,9 +273,9 @@ function Page() {
                                         </button>
                                     </div>
 
-                                    {errors.password && (
+                                    {loginErrors.password && (
                                         <p className="mt-1 text-xs text-red-500">
-                                            {errors.password.message}
+                                            {loginErrors.password.message}
                                         </p>
                                     )}
                                 </div>
@@ -290,10 +309,16 @@ function Page() {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isOtpLogin
+                                        ? isOtpSubmitting
+                                        : isLoginSubmitting
+                                }
                                 className="h-[48px] w-full rounded-[9px] bg-[var(--primary)] text-[14px] font-bold text-white transition hover:bg-[var(--primary-hover)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {isSubmitting
+                                {(isOtpLogin
+                                    ? isOtpSubmitting
+                                    : isLoginSubmitting)
                                     ? "لطفاً صبر کنید..."
                                     : isOtpLogin
                                         ? "دریافت کد تأیید"
@@ -301,7 +326,7 @@ function Page() {
                             </button>
                         </form>
 
-                        {/* Register / Change Login Method */}
+                        {/* Register */}
                         <div className="flex flex-wrap justify-center gap-2 text-center text-[13px] text-[var(--text-secondary)] sm:text-[14px]">
                             <span>حساب کاربری ندارید؟</span>
 
@@ -313,6 +338,7 @@ function Page() {
                             </Link>
                         </div>
 
+                        {/* Change Login Method */}
                         <button
                             type="button"
                             onClick={() => changeLoginMode(!isOtpLogin)}

@@ -7,6 +7,7 @@ import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import DateObject from "react-date-object";
+import { z } from "zod";
 
 import {
     ArrowRight,
@@ -55,7 +56,7 @@ const parseDateParam = (value: string | null): Date | undefined => {
     return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
-// محاسبه تعداد شب‌ها بر اساس روز تقویمی
+
 const getNightCount = (
     checkIn: Date | undefined,
     checkOut: Date | undefined,
@@ -77,7 +78,7 @@ const getNightCount = (
     return Math.max(0, (end - start) / 86_400_000);
 };
 
-// تبدیل Date جاوااسکریپت به DateObject برای DatePicker
+
 const toDateObject = (date: Date | undefined) => {
     if (!date) return null;
 
@@ -105,6 +106,7 @@ export default function BookingPage() {
 
     const initialGuests = Number(searchParams.get("guests") ?? "1");
 
+
     const {
         handleSubmit,
         register,
@@ -114,7 +116,11 @@ export default function BookingPage() {
         getValues,
         setError: setFormError,
         formState: { errors, isSubmitting },
-    } = useForm<BookingFormValues>({
+    } = useForm<
+        z.input<typeof BookingValidator>,
+        unknown,
+        BookingFormValues
+    >({
         resolver: zodResolver(BookingValidator),
         defaultValues: {
             checkIn: initialCheckIn,
@@ -129,12 +135,12 @@ export default function BookingPage() {
         },
     });
 
-    // دریافت مقادیر فرم برای محاسبه هزینه و نمایش تاریخ‌ها
+
     const checkIn = watch("checkIn");
     const checkOut = watch("checkOut");
     const guests = watch("guests");
 
-    // دریافت اطلاعات ویلا
+   // get vill information
     useEffect(() => {
         if (!villaId) {
             setLoading(false);
