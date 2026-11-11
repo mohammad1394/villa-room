@@ -1,34 +1,49 @@
-"use client"
-import React, {useEffect, useState} from 'react';
-import {UserType} from "@/types/User";
-import {showCustomToast} from "@/components/modules/layout/toast/toast";
-import {validateEmail} from "@/utility/auth";
-import {useRouter} from "next/navigation";
 
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
+import { showCustomToast } from "@/components/modules/layout/toast/toast";
+import { validateEmail } from "@/utility/auth";
 
 function PersonalInfo() {
-    const router = useRouter();
+
     const [marketingNotifications, setMarketingNotifications] = useState(true);
     const [bookingNotifications, setBookingNotifications] = useState(true);
-
 
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
 
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
     useEffect(() => {
         const getPersonalInfo = async () => {
-            const res = await fetch("/api/auth/me");
+            try {
+                const response = await api.get("/api/auth/me");
 
-            const data = await res.json();
+                const data = response.data;
 
-            setEmail(data.email);
-            setFullName(data.fullName);
-            setPhone(data.phone);
+                setEmail(data.email ?? "");
+                setFullName(data.fullName ?? "");
+                setPhone(data.phone ?? "");
+            } catch (error) {
+                showCustomToast(
+                    "خطا",
+                    "دریافت اطلاعات کاربر با مشکل مواجه شد",
+                    "x",
+                    "error"
+                );
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-        }
         getPersonalInfo();
     }, []);
+
     const updateInfo = async () => {
         if (!fullName.trim()) {
             showCustomToast(
@@ -61,18 +76,15 @@ function PersonalInfo() {
         }
 
         const updatedInfo = {
-            fullName,
-            email
-        }
-        const res = await fetch("/api/auth/me", {
-            method: "PATCH",
-            headers: {
-                "content-type": "application/json",
-            },
-            body: JSON.stringify(updatedInfo)
-        })
+            fullName: fullName.trim(),
+            email: email.trim().toLowerCase(),
+        };
 
-        if (res.ok) {
+        try {
+            setIsSaving(true);
+
+            await api.patch("/api/auth/me", updatedInfo);
+
             showCustomToast(
                 "موفق",
                 "اطلاعات شما با موفقیت بروزرسانی شد",
@@ -80,17 +92,28 @@ function PersonalInfo() {
                 "success"
             );
 
-            const res = await fetch("/api/auth/logout", {
-                method: "DELETE",
-            })
-            if (res.ok) {
-                router.push("/login");
-            }
+
+        } catch (error) {
+            showCustomToast(
+                "خطا",
+                "در بروزرسانی اطلاعات یا خروج از حساب مشکلی رخ داد",
+                "x",
+                "error"
+            );
+        } finally {
+            setIsSaving(false);
         }
+    };
 
-
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[250px] items-center justify-center">
+                <p className="text-sm text-gray-500">
+                    در حال دریافت اطلاعات...
+                </p>
+            </div>
+        );
     }
-
 
     return (
         <>
@@ -100,22 +123,17 @@ function PersonalInfo() {
                 </h2>
 
                 <div className="grid grid-cols-1 gap-x-5 gap-y-5">
-
                     <div>
                         <label className="mb-2 block text-xs text-[#566575]">
                             نام و نام خانوادگی
                         </label>
 
                         <input
-                            defaultValue={fullName}
                             value={fullName}
-                            onChange={(e) => {
-                                setFullName(e.target.value)
-                            }}
+                            onChange={(e) => setFullName(e.target.value)}
                             className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
                         />
                     </div>
-
 
                     <div>
                         <label className="mb-2 block text-xs text-[#566575]">
@@ -125,9 +143,7 @@ function PersonalInfo() {
                         <input
                             type="email"
                             value={email}
-                            onChange={(e) => {
-                                setEmail(e.target.value)
-                            }}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-left text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
                         />
                     </div>
@@ -138,7 +154,7 @@ function PersonalInfo() {
                         </label>
 
                         <input
-                            type={"tel"}
+                            type="tel"
                             disabled
                             value={phone}
                             className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
@@ -146,17 +162,15 @@ function PersonalInfo() {
                     </div>
                 </div>
 
-
                 <button
                     onClick={updateInfo}
-                    className="mt-7 flex h-[50px] w-full items-center justify-center rounded-[10px] bg-[#17334d] px-8 text-sm font-medium text-white transition hover:bg-[#0c2438] sm:w-[200px]"
+                    disabled={isSaving}
+                    className="mt-7 flex h-[50px] w-full items-center justify-center rounded-[10px] bg-[#17334d] px-8 text-sm font-medium text-white transition hover:bg-[#0c2438] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[200px]"
                 >
-                    ذخیره تغییرات
+                    {isSaving ? "در حال ذخیره..." : "ذخیره تغییرات"}
                 </button>
             </section>
 
-            {/* Notification Settings */
-            }
             <section className="mt-6 overflow-hidden rounded-[16px] border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-100 px-5 py-5 sm:px-7">
                     <h2 className="text-base font-bold text-[#17334d]">
@@ -164,7 +178,6 @@ function PersonalInfo() {
                     </h2>
                 </div>
 
-                {/* Marketing */}
                 <div className="flex items-center justify-between gap-5 px-5 py-5 sm:px-7">
                     <div>
                         <h3 className="text-sm font-semibold text-[#17334d]">
@@ -180,9 +193,7 @@ function PersonalInfo() {
                     <button
                         type="button"
                         onClick={() =>
-                            setMarketingNotifications(
-                                !marketingNotifications
-                            )
+                            setMarketingNotifications(!marketingNotifications)
                         }
                         className={`relative h-[28px] w-[50px] shrink-0 rounded-full transition ${
                             marketingNotifications
@@ -190,17 +201,16 @@ function PersonalInfo() {
                                 : "bg-gray-200"
                         }`}
                     >
-                            <span
-                                className={`absolute top-[4px] h-[20px] w-[20px] rounded-full bg-white shadow-sm transition ${
-                                    marketingNotifications
-                                        ? "right-[26px]"
-                                        : "right-[4px]"
-                                }`}
-                            />
+                        <span
+                            className={`absolute top-[4px] h-[20px] w-[20px] rounded-full bg-white shadow-sm transition ${
+                                marketingNotifications
+                                    ? "right-[26px]"
+                                    : "right-[4px]"
+                            }`}
+                        />
                     </button>
                 </div>
 
-                {/* Booking */}
                 <div className="flex items-center justify-between gap-5 border-t border-gray-100 px-5 py-5 sm:px-7">
                     <div>
                         <h3 className="text-sm font-semibold text-[#17334d]">
@@ -216,9 +226,7 @@ function PersonalInfo() {
                     <button
                         type="button"
                         onClick={() =>
-                            setBookingNotifications(
-                                !bookingNotifications
-                            )
+                            setBookingNotifications(!bookingNotifications)
                         }
                         className={`relative h-[28px] w-[50px] shrink-0 rounded-full transition ${
                             bookingNotifications
@@ -226,19 +234,18 @@ function PersonalInfo() {
                                 : "bg-gray-200"
                         }`}
                     >
-                            <span
-                                className={`absolute top-[4px] h-[20px] w-[20px] rounded-full bg-white shadow-sm transition ${
-                                    bookingNotifications
-                                        ? "right-[26px]"
-                                        : "right-[4px]"
-                                }`}
-                            />
+                        <span
+                            className={`absolute top-[4px] h-[20px] w-[20px] rounded-full bg-white shadow-sm transition ${
+                                bookingNotifications
+                                    ? "right-[26px]"
+                                    : "right-[4px]"
+                            }`}
+                        />
                     </button>
                 </div>
             </section>
         </>
-    )
-        ;
+    );
 }
 
 export default PersonalInfo;

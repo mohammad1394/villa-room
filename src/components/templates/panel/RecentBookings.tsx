@@ -10,35 +10,14 @@ import UserModel from "@/models/User";
 import Booking from "@/models/Booking";
 import {BookingType} from "@/types/Booking";
 import Villa from "@/models/Villa";
+import {getCurrentUser} from "@/utility/getCurrentUser";
 
 
 
 
 export default async function RecentBookings() {
-    await connectToDB();
 
-    const cookieStore = await cookies();
-
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-        redirect("/login");
-    }
-
-    void Villa;
-
-    const tokenPayload = verifyAccessToken(token);
-
-    if (!tokenPayload) {
-        redirect("/login");
-    }
-
-    const user = await UserModel.findOne(
-        {
-            email: tokenPayload.email,
-        },
-        "_id"
-    ).lean();
+    const user =  getCurrentUser();
 
     if (!user) {
         redirect("/login");

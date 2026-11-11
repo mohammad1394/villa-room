@@ -4,6 +4,7 @@ import connectToDB from "@/config/db";
 import Villa from "@/models/Villa";
 import { getCurrentUser } from "@/utility/getCurrentUser";
 import { v2 as cloudinary } from "cloudinary";
+import {checkRole} from "@/utility/checkRole";
 
 export const runtime = "nodejs";
 
@@ -58,21 +59,7 @@ export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
-        const currentUser = await getCurrentUser();
-
-        if (!currentUser) {
-            return NextResponse.json(
-                { message: "ابتدا وارد حساب کاربری خود شوید!" },
-                { status: 401 }
-            );
-        }
-
-        if (currentUser.role !== "Admin") {
-            return NextResponse.json(
-                { message: "فقط مدیر امکان ثبت ویلا را دارد!" },
-                { status: 403 }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const formData = await req.formData();
 

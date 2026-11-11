@@ -3,6 +3,7 @@ import Booking from "@/models/Booking";
 import {getCurrentUser} from "@/utility/getCurrentUser";
 import connectToDB from "@/config/db";
 import {isValidObjectId} from "mongoose";
+import {checkRole} from "@/utility/checkRole";
 
 const validStatuses = [
     "pending",
@@ -17,16 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
         const currentUser = await getCurrentUser();
 
-        if (!currentUser || currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "دسترسی غیرمجاز است.",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const { id } = await params;
         const { status } = await req.json();

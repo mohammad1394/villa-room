@@ -4,9 +4,6 @@ import {BookingType} from "@/types/Booking";
 
 export default function RecentBookings({bookings} : {bookings : BookingType[]}) {
 
-
-
-
     return (
         <div
             className="
@@ -92,7 +89,7 @@ export default function RecentBookings({bookings} : {bookings : BookingType[]}) 
                             </td>
 
                             <td className="px-4 py-4">
-                                {booking.userId.fullName}
+                                {booking.userId?.fullName}
                             </td>
 
                             <td className="px-4 py-4">

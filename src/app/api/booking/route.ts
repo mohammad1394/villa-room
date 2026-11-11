@@ -257,7 +257,7 @@ export async function GET() {
         }
 
         const user = await UserModel.findOne(
-            { email: tokenPayload.email },
+            { _id: tokenPayload.userId },
             "_id"
         );
 

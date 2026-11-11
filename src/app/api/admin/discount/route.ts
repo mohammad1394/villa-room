@@ -4,6 +4,7 @@ import {isValidObjectId} from "mongoose";
 import Villa from "@/models/Villa";
 import Discount from "@/models/Discount";
 import {getCurrentUser} from "@/utility/getCurrentUser";
+import {checkRole} from "@/utility/checkRole";
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,16 +12,7 @@ export async function POST(req: NextRequest) {
 
         const user = await getCurrentUser();
 
-        if (!user || user.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "دسترسی غیرمجاز است.",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const body = await req.json();
 

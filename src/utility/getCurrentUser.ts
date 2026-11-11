@@ -1,3 +1,5 @@
+
+import mongoose from "mongoose";
 import connectToDB from "@/config/db";
 import { cookies } from "next/headers";
 import { verifyAccessToken } from "@/utility/auth";
@@ -7,7 +9,6 @@ export async function getCurrentUser() {
     await connectToDB();
 
     const cookieStore = await cookies();
-
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
@@ -16,16 +17,19 @@ export async function getCurrentUser() {
 
     const tokenPayload = verifyAccessToken(token);
 
-    if (!tokenPayload) {
+    if (
+        !tokenPayload ||
+        !mongoose.isValidObjectId(tokenPayload.userId)
+    ) {
         return null;
     }
 
-    const user = await UserModel.findOne(
-        {
-            email: tokenPayload.email,
-        },
-        "-password -refreshToken -__v"
-    ).lean();
+    const user = await UserModel.findOne({
+        _id: tokenPayload.userId,
+        status: "active",
+    })
+        .select("-password -refreshToken -__v")
+        .lean();
 
     return user;
 }

@@ -33,7 +33,7 @@ export default async function DashboardStats() {
 
     const user = await UserModel.findOne(
         {
-            email: tokenPayload.email,
+            _id: tokenPayload.userId,
         },
         "_id"
     ).lean();

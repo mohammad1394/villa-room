@@ -1,9 +1,8 @@
 import type {Metadata} from "next";
 import "./globals.css";
-import Header from "@/components/modules/Shared/header/Header";
-import Footer from "@/components/modules/Shared/Footer";
 import AOSinit from "@/utility/aos";
 import {Toaster} from "react-hot-toast";
+import SessionRefresher from "@/components/modules/Shared/SessionRefresher";
 
 
 
@@ -21,6 +20,9 @@ export default async function RootLayout({children}: LayoutProps<"/">) {
         <body className="min-h-full flex flex-col" dir={"rtl"}>
 
             <AOSinit/>
+
+            <SessionRefresher />
+
             <Toaster/>
                      {children}
         </body>

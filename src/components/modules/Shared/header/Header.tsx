@@ -24,7 +24,7 @@ async function Header() {
     if (token) {
         const tokenPayload = verifyAccessToken(token);
         if (tokenPayload) {
-            user  = await UserModel.findOne({email: tokenPayload.email} , "fullName role"  ).lean();
+            user  = await UserModel.findOne({_id: tokenPayload.userId} , "fullName role"  ).lean();
             if (!user) {
                 return ;
             }

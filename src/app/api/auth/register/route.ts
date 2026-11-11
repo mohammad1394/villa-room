@@ -1,6 +1,13 @@
 import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
-import {generateAccessToken, hashPassword, validateEmail, validatePassword, validatePhone} from "@/utility/auth";
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    hashPassword,
+    validateEmail,
+    validatePassword,
+    validatePhone
+} from "@/utility/auth";
 import UserModel from "@/models/User"
 
 
@@ -9,19 +16,19 @@ export async function POST(req: NextRequest) {
         await connectToDB();
 
         const body = await req.json();
-        const {formData} = body;
 
         const {
             fullName,
             email,
             password,
-            confirmPassword,
-            phone
-        } = formData;
+            repeatPassword,
+            phoneNumber
+        } = body;
+        
 
         const cleanFullName = fullName.trim();
         const cleanEmail = email.trim().toLowerCase();
-        const cleanPhone = phone.trim();
+        const cleanphoneNumber = phoneNumber.trim();
 
         if (!cleanFullName) {
             return NextResponse.json(
@@ -69,30 +76,30 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (!confirmPassword.trim()) {
+        if (!repeatPassword.trim()) {
             return NextResponse.json(
                 {message: "تکرار رمز عبور را وارد کنید"},
                 {status: 422}
             );
         }
 
-        if (password !== confirmPassword) {
+        if (password !== repeatPassword) {
             return NextResponse.json(
                 {message: "رمز عبور با تکرار آن برابر نیست"},
                 {status: 422}
             );
         }
 
-        if (!cleanPhone) {
+        if (!cleanphoneNumber) {
             return NextResponse.json(
                 {message: "شماره تلفن را وارد کنید"},
                 {status: 422}
             );
         }
 
-        const isValidPhone = validatePhone(cleanPhone);
+        const isValidphoneNumber = validatePhone(cleanphoneNumber);
 
-        if (!isValidPhone) {
+        if (!isValidphoneNumber) {
             return NextResponse.json(
                 {message: "شماره تلفن معتبر نمی‌باشد"},
                 {status: 422}
@@ -112,28 +119,48 @@ export async function POST(req: NextRequest) {
 
         const hashedPassword = await hashPassword(password);
 
-        const users = await UserModel.find({});
-
-        await UserModel.create({
+        const newUser = await UserModel.create({
             fullName: cleanFullName,
             email: cleanEmail,
             password: hashedPassword,
-            phone: cleanPhone,
-            role: users.length > 0 ? "User" : "Admin"
+            phone: cleanphoneNumber,
         });
 
-        const accessToken = generateAccessToken({email})
-        return NextResponse.json(
-            {message: "کاربر با موفقیت ثبت نام شد"},
+
+        const accessToken = generateAccessToken({userId: newUser._id.toString()});
+
+        const refreshToken = generateRefreshToken({userId: newUser._id.toString()});
+
+        const response = NextResponse.json(
+            {
+                message: "با موفقیت وارد شدید",
+            },
             {
                 status: 201,
-                headers: {
-                    "set-Cookie": `token = ${accessToken};path=/;httpOnly= true`
-                }
             }
         );
 
-    } catch (error) {
+        const isProduction = process.env.NODE_ENV === "production";
+
+        response.cookies.set("token", accessToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 15 * 60,
+        });
+
+        response.cookies.set("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 15 * 24 * 60 * 60,
+        });
+
+        return response;
+
+    }catch (error) {
         console.error(error);
 
         return NextResponse.json(

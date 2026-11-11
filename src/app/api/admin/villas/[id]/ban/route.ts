@@ -4,6 +4,7 @@ import Villa from "@/models/Villa";
 import { isValidObjectId } from "mongoose";
 import { getCurrentUser } from "@/utility/getCurrentUser";
 import VillaBan from "@/models/VillaBan";
+import {checkRole} from "@/utility/checkRole";
 
 interface Params {
     params: Promise<{
@@ -18,29 +19,10 @@ export async function POST(
     try {
         await connectToDB();
 
+
         const currentUser = await getCurrentUser();
 
-        if (!currentUser) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری خود شوید!",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        if (currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "فقط مدیر امکان انجام این عملیات را دارد!",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const { id } = await params;
 

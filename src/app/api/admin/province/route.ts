@@ -2,6 +2,7 @@ import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
 import Province from "@/models/Province";
 import {getCurrentUser} from "@/utility/getCurrentUser";
+import {checkRole} from "@/utility/checkRole";
 
 export async function POST(req: NextRequest) {
     try {
@@ -109,29 +110,7 @@ export async function GET() {
     try {
         await connectToDB();
 
-        const user = await getCurrentUser();
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری شوید",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        if (user.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "شما دسترسی لازم را ندارید",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const provinces = await Province.find({
             isActive: true,

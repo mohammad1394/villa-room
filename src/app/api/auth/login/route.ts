@@ -1,13 +1,27 @@
-import {NextRequest , NextResponse} from "next/server";
+
+import { NextRequest, NextResponse } from "next/server";
 import connectToDB from "@/config/db";
-import {generateAccessToken, generateRefreshToken, validateEmail, verifyPassword} from "@/utility/auth";
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    validateEmail,
+    verifyPassword,
+} from "@/utility/auth";
 import UserModel from "@/models/User";
 
-export async function POST(req : NextRequest){
+export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
-        const {email , password } = await req.json();
+        const body = await req.json();
+        const { email, password } = body;
+
+        if (typeof email !== "string" || typeof password !== "string") {
+            return NextResponse.json(
+                { message: "اطلاعات ورود معتبر نیستند" },
+                { status: 422 }
+            );
+        }
 
         const cleanEmail = email.trim().toLowerCase();
 
@@ -18,22 +32,6 @@ export async function POST(req : NextRequest){
             );
         }
 
-        const isValidEmail = validateEmail(cleanEmail);
-
-        if (!isValidEmail) {
-            return NextResponse.json(
-                { message: "ایمیل معتبر نمی‌باشد" },
-                { status: 422 }
-            );
-        }
-
-        const user = await UserModel.findOne({email : cleanEmail});
-
-
-        if (!user) {
-            return NextResponse.json({message : "کاربری با ایمیل مورد نظر یافت نشد "} , {status : 404});
-        }
-
         if (!password.trim()) {
             return NextResponse.json(
                 { message: "رمز عبور را وارد کنید" },
@@ -41,47 +39,94 @@ export async function POST(req : NextRequest){
             );
         }
 
-        const comparePassword = await verifyPassword(password , user.password);
-
-        if (!comparePassword) {
-            return NextResponse.json({message : "ایمیل یا رمز کاربری صحیح نمیباشد"} , {status : 422});
+        if (!validateEmail(cleanEmail)) {
+            return NextResponse.json(
+                { message: "ایمیل معتبر نمی‌باشد" },
+                { status: 422 }
+            );
         }
 
-        const accessToken = generateAccessToken({email : cleanEmail});
+        const user = await UserModel.findOne({ email: cleanEmail });
 
-        const refreshToken = generateRefreshToken({email : cleanEmail});
+        if (!user) {
+            return NextResponse.json(
+                { message: "ایمیل یا رمز عبور صحیح نمی‌باشد" },
+                { status: 401 }
+            );
+        }
 
-        await UserModel.findOneAndUpdate({email} , {
-            $set : {
-                refreshToken : refreshToken
-            }
-        })
+        const isPasswordValid = await verifyPassword(
+            password,
+            user.password
+        );
 
-        const response = NextResponse.json(
+        if (!isPasswordValid) {
+            return NextResponse.json(
+                { message: "ایمیل یا رمز عبور صحیح نمی‌باشد" },
+                { status: 401 }
+            );
+        }
+
+        if (user.status !== "active") {
+            return NextResponse.json(
+                { message: "حساب کاربری شما مسدود شده است" },
+                { status: 403 }
+            );
+        }
+
+        const userId = user._id.toString();
+
+        const accessToken = generateAccessToken({ userId });
+        const refreshToken = generateRefreshToken({ userId });
+
+        const updatedUser = await UserModel.findOneAndUpdate(
             {
-                message: "با موفقیت وارد شدید",
+                _id: user._id,
+                status: "active",
             },
             {
-                status: 200,
-            }
+                $set: { refreshToken },
+            },
+            { new: true }
         );
+
+        if (!updatedUser) {
+            return NextResponse.json(
+                { message: "حساب کاربری شما قابل ورود نیست" },
+                { status: 403 }
+            );
+        }
+
+        const response = NextResponse.json(
+            { message: "با موفقیت وارد شدید" },
+            { status: 200 }
+        );
+
+        const isProduction = process.env.NODE_ENV === "production";
 
         response.cookies.set("token", accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            path: "/",
+            secure: isProduction,
             sameSite: "lax",
+            path: "/",
+            maxAge: 15 * 60,
+        });
+
+        response.cookies.set("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 15 * 24 * 60 * 60,
         });
 
         return response;
-
-    }
-    catch(err){
-        console.log("Register error =>" ,  err)
+    } catch (error) {
+        console.error("Login error:", error);
 
         return NextResponse.json(
-            {message: "خطایی در سرور رخ داد"},
-            {status: 500}
+            { message: "خطایی در سرور رخ داد" },
+            { status: 500 }
         );
     }
 }

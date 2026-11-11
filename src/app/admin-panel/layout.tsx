@@ -4,17 +4,15 @@ import {redirect} from "next/navigation";
 import AdminDashboardSidebar from "@/components/modules/adminPanel/AdminDashboardSidebar";
 import AdminDashboardHeader from "@/components/modules/adminPanel/AdminDashboardHeader";
 import {UserType} from "@/types/User";
+import {checkRole} from "@/utility/checkRole";
 
 
 export default async function Layout({children,}: {
     children: React.ReactNode
 }) {
 
-    const user : UserType = await getCurrentUser();
 
-    if (!user || user.role !== "Admin") {
-        return redirect("/login");
-    }
+    checkRole(["Admin" , "SuperAdmin"])
 
     return (
         <div className="min-h-screen bg-[#f8f9fb]">

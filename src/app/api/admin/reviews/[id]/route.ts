@@ -3,6 +3,7 @@ import {getCurrentUser} from "@/utility/getCurrentUser";
 import {NextResponse} from "next/server";
 import {isValidObjectId} from "mongoose";
 import Review from "@/models/Review";
+import {checkRole} from "@/utility/checkRole";
 
 const validStatuses = [
     "approved",
@@ -16,18 +17,8 @@ export async function PATCH(
     try {
         await connectToDB();
 
-        const currentUser = await getCurrentUser();
 
-        if (!currentUser || currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "دسترسی غیرمجاز است.",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const {id} = await params;
         const {status} = await request.json();

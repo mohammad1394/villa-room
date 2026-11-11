@@ -3,6 +3,7 @@ import {getCurrentUser} from "@/utility/getCurrentUser";
 import connectToDB from "@/config/db";
 import {isValidObjectId} from "mongoose";
 import Ticket from "@/models/Ticket";
+import {checkRole} from "@/utility/checkRole";
 
 const validStatuses = [
     "open",
@@ -18,18 +19,7 @@ export async function PUT(
     try {
         await connectToDB();
 
-        const currentUser = await getCurrentUser();
-
-        if (!currentUser || currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "دسترسی غیرمجاز است.",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
+        checkRole(["Admin" , "SuperAdmin"]);
 
         const { id } = await params;
         const { status } = await req.json();
