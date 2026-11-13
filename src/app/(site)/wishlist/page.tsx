@@ -15,6 +15,12 @@ import {getCurrentUser} from "@/utility/getCurrentUser";
 async function FavoriteVillasPage() {
     const user = await getCurrentUser();
 
+    if (!user){
+        redirect(`/login`);
+    }
+
+
+
     const wishlist : WishlistItem[] = await Favorite
         .find({ userId: user._id })
         .populate("villaId")

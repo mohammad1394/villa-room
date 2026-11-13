@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDB from "@/config/db";
 import UserModel from "@/models/User";
-import { verifyRefreshToken } from "@/utility/auth";
+import { verifyRefreshToken, hashToken } from "@/utility/auth";
 
 export async function DELETE(req: NextRequest) {
     const response = NextResponse.json(
@@ -31,7 +31,7 @@ export async function DELETE(req: NextRequest) {
         await UserModel.findOneAndUpdate(
             {
                 _id: payload.userId,
-                refreshToken,
+                refreshToken: hashToken(refreshToken),
             },
             {
                 $unset: { refreshToken: 1 },

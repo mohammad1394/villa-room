@@ -1,6 +1,7 @@
 
 import { hash, compare } from "bcryptjs";
-import { sign, verify, type JwtPayload } from "jsonwebtoken";
+import { createHash } from "crypto";
+import { sign, verify } from "jsonwebtoken";
 
 type TokenPayload = {
     userId: string;
@@ -110,4 +111,20 @@ export const verifyRefreshToken = (token: string): TokenPayload | null => {
     } catch {
         return null;
     }
+};
+
+/**
+ * Refresh tokens are stored in the database only as a SHA-256 hash,
+ * so a leaked database cannot be used to hijack sessions.
+ */
+export const hashToken = (token: string) =>
+    createHash("sha256").update(token).digest("hex");
+
+let dummyPasswordHash: Promise<string> | null = null;
+
+// a real bcrypt hash (created once, lazily) used to keep login timing equal
+// for unknown emails, so response time does not reveal whether an account exists
+export const getDummyPasswordHash = () => {
+    dummyPasswordHash ??= hash("dummy-password-for-timing", 12);
+    return dummyPasswordHash;
 };

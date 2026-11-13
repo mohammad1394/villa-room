@@ -6,6 +6,7 @@ import UserModel from "@/models/User";
 import {
     generateAccessToken,
     verifyRefreshToken,
+    hashToken,
 } from "@/utility/auth";
 
 function clearAuthCookies(response: NextResponse) {
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
 
         const user = await UserModel.findOne({
             _id: tokenPayload.userId,
-            refreshToken,
+            refreshToken: hashToken(refreshToken),
             status: "active",
         }).select("_id");
 

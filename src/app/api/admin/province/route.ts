@@ -110,7 +110,11 @@ export async function GET() {
     try {
         await connectToDB();
 
-        checkRole(["Admin" , "SuperAdmin"]);
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
 
         const provinces = await Province.find({
             isActive: true,

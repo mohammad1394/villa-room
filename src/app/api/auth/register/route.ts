@@ -6,16 +6,35 @@ import {
     hashPassword,
     validateEmail,
     validatePassword,
-    validatePhone
+    validatePhone,
+    hashToken,
 } from "@/utility/auth";
+import { rateLimit } from "@/utility/rateLimit";
 import UserModel from "@/models/User"
 
 
 export async function POST(req: NextRequest) {
+    const limited = rateLimit(req, {
+        key: "register",
+        limit: 5,
+        windowSeconds: 10 * 60,
+    });
+
+    if (limited) {
+        return limited;
+    }
+
     try {
         await connectToDB();
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
+
+        if (!body || typeof body !== "object") {
+            return NextResponse.json(
+                {message: "اطلاعات ارسالی معتبر نیست"},
+                {status: 422}
+            );
+        }
 
         const {
             fullName,
@@ -24,11 +43,24 @@ export async function POST(req: NextRequest) {
             repeatPassword,
             phoneNumber
         } = body;
-        
 
-        const cleanFullName = fullName.trim();
-        const cleanEmail = email.trim().toLowerCase();
-        const cleanphoneNumber = phoneNumber.trim();
+
+
+        const cleanFullName =
+            typeof fullName === "string" ? fullName.trim() : "";
+
+        const cleanEmail =
+            typeof email === "string" ? email.trim().toLowerCase() : "";
+
+        const cleanphoneNumber =
+            typeof phoneNumber === "string" ? phoneNumber.trim() : "";
+
+        const cleanPassword =
+            typeof password === "string" ? password.trim() : "";
+
+        const cleanRepeatPassword =
+        typeof  repeatPassword === "string" ? repeatPassword.trim() : "";
+
 
         if (!cleanFullName) {
             return NextResponse.json(
@@ -60,7 +92,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (!password.trim()) {
+        if (!cleanPassword) {
             return NextResponse.json(
                 {message: "رمز عبور را وارد کنید"},
                 {status: 422}
@@ -76,14 +108,14 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (!repeatPassword.trim()) {
+        if (!cleanRepeatPassword) {
             return NextResponse.json(
                 {message: "تکرار رمز عبور را وارد کنید"},
                 {status: 422}
             );
         }
 
-        if (password !== repeatPassword) {
+        if (cleanPassword !== cleanRepeatPassword) {
             return NextResponse.json(
                 {message: "رمز عبور با تکرار آن برابر نیست"},
                 {status: 422}
@@ -117,7 +149,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const hashedPassword = await hashPassword(password);
+        const hashedPassword = await hashPassword(cleanPassword);
 
         const newUser = await UserModel.create({
             fullName: cleanFullName,
@@ -130,6 +162,12 @@ export async function POST(req: NextRequest) {
         const accessToken = generateAccessToken({userId: newUser._id.toString()});
 
         const refreshToken = generateRefreshToken({userId: newUser._id.toString()});
+
+        await UserModel.findByIdAndUpdate(
+            newUser._id,
+            { refreshToken: hashToken(refreshToken) }
+        );
+
 
         const response = NextResponse.json(
             {

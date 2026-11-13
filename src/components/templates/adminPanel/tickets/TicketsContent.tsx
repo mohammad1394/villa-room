@@ -112,8 +112,8 @@ export default function TicketsContent({tickets} : {tickets : TicketType[]}) {
         return tickets.filter((ticket ) => {
             const matchesSearch =
                 ticket._id.toLowerCase().includes(value) ||
-                ticket.userId.fullName.toLowerCase().includes(value) ||
-                ticket.userId.phone.includes(value);
+                ticket.userId?.fullName.toLowerCase().includes(value) ||
+                ticket.userId?.phone.includes(value);
 
             const matchesStatus =
                 statusFilter === "همه" ||
@@ -394,10 +394,10 @@ export default function TicketsContent({tickets} : {tickets : TicketType[]}) {
                                         <div className="flex items-center gap-3">
 
                                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEF3F7] text-[#60798A]">
-                                                {ticket.userId.avatar ? (
+                                                {ticket.userId?.avatar ? (
                                                     <img
-                                                        src={ticket.userId.avatar}
-                                                        alt={ticket.userId.fullName}
+                                                        src={ticket.userId?.avatar}
+                                                        alt={ticket.userId?.fullName}
                                                         className="h-9 w-9 rounded-full object-cover"
                                                     />
                                                 ) : (
@@ -407,14 +407,14 @@ export default function TicketsContent({tickets} : {tickets : TicketType[]}) {
 
                                             <div>
                                                 <p className="text-[11px] font-bold text-[#253C4D]">
-                                                    {ticket.userId.fullName}
+                                                    {ticket.userId?.fullName}
                                                 </p>
 
                                                 <p
                                                     dir="ltr"
                                                     className="mt-1 text-right text-[9px] text-[#A0ACB7]"
                                                 >
-                                                    {ticket.userId.phone}
+                                                    {ticket.userId?.phone}
                                                 </p>
                                             </div>
 

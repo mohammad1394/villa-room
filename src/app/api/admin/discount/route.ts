@@ -10,13 +10,13 @@ export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
-        const user = await getCurrentUser();
+        const { user, response } = await checkRole(["Admin", "SuperAdmin"]);
 
-        checkRole(["Admin" , "SuperAdmin"]);
+        if (response) {
+            return response;
+        }
 
         const body = await req.json();
-
-
 
         const {
             code,
@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
             maxUse,
             expire,
             percent,
-        } = body.onSubmit;
+        } = body;
+
 
 
         if (!code || !code.trim()) {

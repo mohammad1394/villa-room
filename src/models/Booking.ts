@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema(
     {
@@ -11,6 +11,17 @@ const bookingSchema = new mongoose.Schema(
         villaId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Villa",
+            required: true,
+        },
+
+        fullName: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        phoneNumber: {
+            type: String,
             required: true,
         },
 

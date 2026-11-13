@@ -162,7 +162,6 @@ export default function ContactForm() {
         }
     };
 
-    console.log(process.env.NEXT_PUBLIC_MONGODB_URL)
     return (
         <div className="rounded-[10px] border border-gray-200 bg-white p-4 sm:p-5 md:p-6">
 
@@ -246,7 +245,7 @@ export default function ContactForm() {
                     >
                         <option value="">موضوع پیام را انتخاب کنید</option>
                         <option value="reservation">رزرو ویلا</option>
-                        <option value="payment">پرداخت</option>
+                        <option value="my-payment">پرداخت</option>
                         <option value="support">پشتیبانی</option>
                         <option value="complaint">انتقاد و پیشنهاد</option>
                         <option value="other">سایر</option>

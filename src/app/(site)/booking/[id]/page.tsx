@@ -27,8 +27,8 @@ import { VillaType } from "@/types/Villa";
 import { Controller, useForm } from "react-hook-form";
 import {
     BookingFormValues,
-    BookingValidator,
-} from "@/validator/BookingValidator";
+    BookingFormSchema,
+} from "@/validator/BookingFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { showCustomToast } from "@/components/modules/layout/toast/toast";
 
@@ -117,11 +117,11 @@ export default function BookingPage() {
         setError: setFormError,
         formState: { errors, isSubmitting },
     } = useForm<
-        z.input<typeof BookingValidator>,
+        z.input<typeof BookingFormSchema>,
         unknown,
         BookingFormValues
     >({
-        resolver: zodResolver(BookingValidator),
+        resolver: zodResolver(BookingFormSchema),
         defaultValues: {
             checkIn: initialCheckIn,
             checkOut: initialCheckOut,
@@ -131,7 +131,6 @@ export default function BookingPage() {
                     : 1,
             fullName: "",
             phoneNumber: "",
-            description: "",
         },
     });
 
@@ -183,7 +182,7 @@ export default function BookingPage() {
 
                 const currentGuests = getValues("guests") || 1;
 
-                // محدود کردن تعداد مهمان‌ها به ظرفیت ویلا
+
                 setValue(
                     "guests",
                     Math.min(Math.max(1, currentGuests), maximum),
@@ -209,7 +208,7 @@ export default function BookingPage() {
         return () => controller.abort();
     }, [villaId, getValues, setValue]);
 
-    // محاسبه هزینه اقامت
+
     const nights = getNightCount(checkIn, checkOut);
 
     const pricePerNight = villa?.pricePerNight ?? 0;
@@ -225,7 +224,7 @@ export default function BookingPage() {
 
     const location = [villa?.city].filter(Boolean).join("، ");
 
-    // تغییر تاریخ ورود
+
     const handleCheckInChange = (date: DateObject | null) => {
         if (!date) {
             setValue("checkIn", undefined as unknown as Date, {
@@ -243,7 +242,6 @@ export default function BookingPage() {
             shouldDirty: true,
         });
 
-        // اگر تاریخ خروج قبل از تاریخ ورود جدید باشد، آن را پاک می‌کنیم
         if (checkOut && selectedDate >= checkOut) {
             setValue("checkOut", undefined as unknown as Date, {
                 shouldValidate: true,
@@ -252,7 +250,7 @@ export default function BookingPage() {
         }
     };
 
-    // ثبت درخواست رزرو
+
     const formSubmitting = async (values: BookingFormValues) => {
         if (!villa) {
             setPageError("ویلایی برای رزرو پیدا نشد.");
@@ -262,7 +260,6 @@ export default function BookingPage() {
         setPageError("");
         setSuccess("");
 
-        // بررسی ظرفیت واقعی ویلا
         if (values.guests > maxGuests) {
             setFormError("guests", {
                 type: "manual",
@@ -286,7 +283,6 @@ export default function BookingPage() {
                     guests: values.guests,
                     fullName: values.fullName.trim(),
                     phoneNumber: values.phoneNumber.trim(),
-                    note: values.description?.trim() ?? "",
                 }),
             });
 
@@ -312,7 +308,7 @@ export default function BookingPage() {
                 "success",
             );
 
-            // انتقال کاربر به رزروهایش
+
             router.push("/panel/my-bookings");
         } catch (err) {
             const message =
@@ -331,7 +327,7 @@ export default function BookingPage() {
         }
     };
 
-    // وضعیت دریافت اطلاعات ویلا
+
     if (loading) {
         return (
             <main
@@ -349,7 +345,7 @@ export default function BookingPage() {
         );
     }
 
-    // در صورت پیدا نشدن ویلا
+
     if (!villa) {
         return (
             <main
@@ -754,39 +750,6 @@ export default function BookingPage() {
                                         )}
                                     </div>
 
-                                    {/* توضیحات اضافی */}
-                                    <div>
-                                        <label
-                                            htmlFor="description"
-                                            className="mb-2 block text-sm font-medium text-gray-700"
-                                        >
-                                            توضیحات اضافی
-
-                                            <span className="mr-1 font-normal text-gray-400">
-                                                (اختیاری)
-                                            </span>
-                                        </label>
-
-                                        <textarea
-                                            id="description"
-                                            {...register("description")}
-                                            rows={3}
-                                            maxLength={300}
-                                            aria-invalid={!!errors.description}
-                                            placeholder="اگر درخواست خاصی داری اینجا بنویس."
-                                            className={`w-full resize-y rounded-xl border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-[var(--primary)] ${
-                                                errors.description
-                                                    ? "border-red-400"
-                                                    : "border-gray-200"
-                                            }`}
-                                        />
-
-                                        {errors.description && (
-                                            <p className="mt-2 text-xs text-red-500">
-                                                {errors.description.message}
-                                            </p>
-                                        )}
-                                    </div>
                                 </div>
                             </section>
 
@@ -895,7 +858,7 @@ export default function BookingPage() {
     );
 }
 
-// کامپوننت خلاصه هزینه
+
 function PriceSummary({
                           pricePerNight,
                           nights,

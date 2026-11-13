@@ -14,6 +14,10 @@ import {BookingType} from "@/types/Booking";
 export default async function BookingsPage() {
     const user = await getCurrentUser();
 
+    if (!user) {
+        redirect("/")
+    }
+
     const bookings : BookingType[] = await Booking.find({
         userId: user._id,
     }).populate(

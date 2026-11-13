@@ -1,14 +1,12 @@
 "use client";
-
 import Image from "next/image";
-import Link from "next/link";
 import {
     CalendarDays,
     MapPin,
     Users,
     Moon,
-    ChevronLeft,
 } from "lucide-react";
+import {BookingStatus} from "../../../types/Booking";
 
 type BookingCardProps = {
     booking: {
@@ -24,14 +22,13 @@ type BookingCardProps = {
         nights: number;
         guests: number;
         totalPrice: number;
-        status:
-            | "pending"
-            | "confirmed"
-            | "cancelled"
-            | "completed";
+        status: BookingStatus
+
 
     };
 };
+
+
 
 export default function BookingCard({booking}: BookingCardProps) {
     const formatDate = (date: string) => {
@@ -42,8 +39,30 @@ export default function BookingCard({booking}: BookingCardProps) {
         return new Intl.NumberFormat("fa-IR").format(price);
     };
 
-    const isActive = booking.status === "completed";
+    const bookingStatus = {
+       pending : {
+           text : "در انتظار تایید",
+           class : "bg-orange-600 text-white"
+       },
+        confirmed : {
+            text : "تایید شده",
+            class : "bg-green-500 text-white"
+        },
+        cancelled : {
+            text : "لغو شده",
+            class : "bg-red-500 text-white"
+        },
+        completed : {
+            text : "رزرو کامل شده",
+            class : "bg-green-700 text-white"
+        },
+    }
 
+    const checkBookingStatus = (status: BookingStatus) => {
+        return bookingStatus[status];
+    };
+
+    const statusInfo = checkBookingStatus(booking.status);
     return (
         <article
             className="w-full overflow-hidden rounded-[16px] border border-gray-200 bg-white transition hover:shadow-md"
@@ -77,20 +96,21 @@ export default function BookingCard({booking}: BookingCardProps) {
                             </div>
                         </div>
 
+                        {
+
+                        }
                         <span
                             className={`
                                 shrink-0
                                 rounded-full
                                 px-3 py-1
                                 text-xs font-medium
-                                ${
-                                isActive
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-gray-100 text-gray-500"
-                            }
+                                ${statusInfo.class}
                             `}
                         >
-                            {isActive ? "رزرو شده" : "پایان یافته"}
+                            {
+                                statusInfo.text
+                            }
                         </span>
                     </div>
 
@@ -184,14 +204,6 @@ export default function BookingCard({booking}: BookingCardProps) {
                                 </span>
                             </div>
                         </div>
-
-                        <Link
-                            href={`/dashboard/bookings/${booking._id}`}
-                            className="flex h-[42px] items-center justify-center gap-1 rounded-[10px] border border-[var(--primary)] px-5 text-sm font-medium text-[var(--primary)] transition hover:bg-[var(--primary)] hover:text-white"
-                        >
-                            مشاهده جزئیات
-                            <ChevronLeft size={17}/>
-                        </Link>
                     </div>
                 </div>
             </div>

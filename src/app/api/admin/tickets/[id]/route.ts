@@ -1,5 +1,4 @@
 import {NextRequest, NextResponse} from "next/server";
-import {getCurrentUser} from "@/utility/getCurrentUser";
 import connectToDB from "@/config/db";
 import {isValidObjectId} from "mongoose";
 import Ticket from "@/models/Ticket";
@@ -19,7 +18,11 @@ export async function PUT(
     try {
         await connectToDB();
 
-        checkRole(["Admin" , "SuperAdmin"]);
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
 
         const { id } = await params;
         const { status } = await req.json();

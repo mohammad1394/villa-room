@@ -5,6 +5,7 @@ import {SubDepartmentType} from "@/types/SubDepartment";
 export type TicketStatus =
     | "pending"
     | "open"
+    | "answered"
     | "closed"
 
 
@@ -23,7 +24,7 @@ export  type  TicketType = {
     priority: TicketPriority;
     status: TicketStatus;
     lastMessageAt?: string;
-    lastMessageBy?: "User" | "Admin";
+    lastMessageBy?: "User" | "Support";
     closedAt?: string | null;
     createdAt: string;
     updatedAt: string;

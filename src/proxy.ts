@@ -98,5 +98,5 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/panel/:path*"],
+    matcher: ["/panel/:path*", "/admin-panel/:path*"],
 };

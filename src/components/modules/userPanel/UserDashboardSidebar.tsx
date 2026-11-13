@@ -27,44 +27,44 @@ export default function UserDashboardSidebar() {
         {
             title: "داشبورد",
             icon: House,
-            active: pathName === "/userPanel",
-            link: "/userPanel"
+            active: pathName === "/panel",
+            link: "/panel"
         },
         {
             title: "رزروهای من",
             icon: CalendarDays,
-            active: pathName === "/userPanel/my-bookings",
-            link: "/userPanel/my-bookings"
+            active: pathName === "/panel/my-bookings",
+            link: "/panel/my-bookings"
         },
         {
             title: "علاقه‌مندی‌ها",
             icon: Heart,
-            active: pathName === "/userPanel/my-wishlist",
-            link: "/userPanel/my-wishlist"
+            active: pathName === "/panel/my-wishlist",
+            link: "/panel/my-wishlist"
         },
         {
             title: "اطلاعات حساب کاربری",
             icon: UserRound,
-            active: pathName === "/userPanel/me",
-            link: "/userPanel/me"
+            active: pathName === "/panel/me",
+            link: "/panel/me"
         },
         {
             title: "پیام‌ها",
             icon: MessageCircle,
-            active: pathName === "/userPanel/tickets",
-            link: "/userPanel/tickets"
+            active: pathName === "/panel/tickets",
+            link: "/panel/tickets"
         },
         {
             title: "کامنت های من ",
             icon: UserRound,
-            active: pathName === "/userPanel/my-review",
-            link: "/userPanel/my-review"
+            active: pathName === "/panel/my-review",
+            link: "/panel/my-review"
         },
         {
             title: "تراکنش‌ها",
             icon: CreditCard,
-            active: pathName === "/userPanel/my-payment",
-            link: "/userPanel/my-payment"
+            active: pathName === "/panel/my-payment",
+            link: "/panel/my-payment"
         },
     ];
 
@@ -74,15 +74,24 @@ export default function UserDashboardSidebar() {
 
         try {
             const response = await fetch("/api/auth/logout", {
-                method: "POST",
+                method: "DELETE",
             });
 
             if (response.ok) {
                 showCustomToast("موفق" ,   "شما با موفقیت خارج شدید","check" , "success");
                 router.push("/");
             }
+
+            if (!response.ok) {
+                showCustomToast("خطا" ,   "خروج شما با خطا مواجه شد","x" , "error");
+                router.push("/");
+            }
+
         } catch (error) {
-            console.error(error);
+            if (error) {
+                showCustomToast("خطا" ,   "خروج شما با خطا مواجه شد","x" , "error");
+                router.push("/");
+            }
         } finally {
             setIsLoading(false);
         }

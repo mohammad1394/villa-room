@@ -18,7 +18,11 @@ export async function PATCH(
         await connectToDB();
 
 
-        checkRole(["Admin" , "SuperAdmin"]);
+        const {  response } = await checkRole(["Admin", "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
 
         const {id} = await params;
         const {status} = await request.json();

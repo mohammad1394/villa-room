@@ -59,7 +59,14 @@ export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
-        checkRole(["Admin" , "SuperAdmin"]);
+        const { user, response } = await checkRole([
+            "Admin",
+            "SuperAdmin",
+        ]);
+
+        if (response) {
+            return response;
+        }
 
         const formData = await req.formData();
 

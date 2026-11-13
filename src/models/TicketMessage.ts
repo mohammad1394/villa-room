@@ -17,7 +17,7 @@ const ticketMessageSchema = new mongoose.Schema(
 
         senderRole: {
             type: String,
-            enum: ["User", "Admin"],
+            enum: ["User", "Support"],
             required: true,
         },
 

@@ -10,23 +10,23 @@ import { getCurrentUser } from "@/utility/getCurrentUser";
 import Ticket from "@/models/Ticket";
 import Department from "@/models/Department";
 import SubDepartment from "@/models/SubDepartment";
+import {checkRole} from "@/utility/checkRole";
 
-async function Page({
-                        params,
-                    }: {
-    params: Promise<{ id: string }>;
-}) {
+async function Page({params}: { params: Promise<{ id: string }>; }) {
     await connectToDB();
 
-    const { id } = await params;
+    const { response } = await checkRole(["Admin" , "SuperAdmin"]);
 
-
-
-    const user = await getCurrentUser();
-
-    if (!user || user.role !== "Admin") {
-        redirect("/login");
+    if (response) {
+        return (
+            <div className="flex min-h-[50vh] items-center justify-center">
+                <p className="text-red-500">
+                    شما اجازه دسترسی به این صفحه را ندارید.
+                </p>
+            </div>
+        );
     }
+    const { id } = await params;
 
 
     if (!id || !isValidObjectId(id)) {
@@ -66,6 +66,7 @@ async function Page({
             <TicketChat
                 ticket={serializedTicket}
                 messages={serializedMessages}
+                backUrl="/admin-panel/tickets"
             />
         </div>
     );

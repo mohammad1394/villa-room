@@ -23,11 +23,13 @@ import {useRouter} from "next/navigation";
 type TicketChatProps = {
     ticket: TicketType;
     messages: TicketMessageType[];
+    backUrl: string;
 };
 
 export default function TicketChat({
                                        messages,
                                        ticket,
+                                       backUrl,
                                    }: TicketChatProps) {
 
 
@@ -52,7 +54,6 @@ export default function TicketChat({
             setIsLoading(true);
             const newMessage = {
                 ticketId: ticket._id,
-                senderRole: "Admin",
                 body: message.trim()
             };
 
@@ -106,6 +107,9 @@ const getStatusLabel = (status: TicketType["status"]) => {
         case "pending":
             return "در انتظار";
 
+        case "answered":
+            return "پاسخ داده شده";
+
         case "closed":
             return "بسته شده";
 
@@ -141,7 +145,7 @@ return (
         <button
             type="button"
             onClick={() => {
-                router.push("panel/tickets")
+                router.push(backUrl)
             }}
             className="mb-5 flex items-center gap-2 text-sm text-gray-500 transition hover:text-[var(--primary)]"
         >

@@ -6,7 +6,7 @@ import {showCustomToast} from "@/components/modules/layout/toast/toast";
 type User = {
     _id: string;
     fullName: string;
-    role : "Admin" | "User"
+    role : "Admin" | "User" | "superAdmin";
 };
 
 interface NavbarActionsProps {
@@ -82,9 +82,9 @@ function DropDownMenu({isOpen, setIsOpen, user}: NavbarActionsProps) {
                 </p>
             </div>
             {
-                user?.role === "Admin" ? (
+                user?.role !== "User" ? (
                     <button
-                        onClick={() => handleNavigate("/panel")}
+                        onClick={() => handleNavigate("/admin-panel")}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-right text-[13px] transition-colors hover:bg-gray-50"
                     >
                         <LayoutDashboard size={18} className="text-gray-400"/>

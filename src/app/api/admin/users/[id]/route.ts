@@ -22,10 +22,11 @@ export async function POST(
     try {
         await connectToDB();
 
-        const currentUser =  getCurrentUser()
+        const { user, response } = await checkRole(["Admin", "SuperAdmin"]);
 
-
-        checkRole(["Admin" , "SuperAdmin"]);
+        if (response) {
+            return response;
+        }
 
 
         const {id} = await params;
@@ -59,9 +60,9 @@ export async function POST(
             );
         }
 
-        const user = await User.findById(id);
+        const findUser = await User.findById(id);
 
-        if (!user) {
+        if (!findUser) {
             return NextResponse.json(
                 {
                     message: "کاربر با این شناسه پیدا نشد!",
@@ -72,7 +73,7 @@ export async function POST(
             );
         }
 
-        if (user.role === "Admin") {
+        if (findUser.role === "Admin" || findUser.role === "SuperAdmin") {
             return NextResponse.json(
                 {
                     message: "امکان مسدود کردن مدیر وجود ندارد!",
@@ -84,7 +85,7 @@ export async function POST(
         }
 
         const existingBan = await UserBan.findOne({
-            email: user.email,
+            email: findUser.email,
             isActive: true,
         });
 
@@ -100,16 +101,16 @@ export async function POST(
         }
 
         const bannedUser = await UserBan.create({
-            email: user.email,
-            phone: user.phone,
+            email: findUser.email,
+            phone: findUser.phone,
             reason: reason.trim(),
             bannedUntil: bannedUntil || null,
-            bannedBy: currentUser._id,
+            bannedBy: user._id,
             isActive: true,
         });
 
-        user.status = "blocked";
-        await user.save();
+        findUser.status = "blocked";
+        await findUser.save();
 
         return NextResponse.json(
             {
@@ -141,28 +142,10 @@ export async function PUT(
     try {
         await connectToDB();
 
-        const currentUser = await getCurrentUser();
+        const { user, response } = await checkRole(["Admin", "SuperAdmin"]);
 
-        if (!currentUser) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری خود شوید!",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        if (currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "فقط مدیر امکان انجام این عملیات را دارد!",
-                },
-                {
-                    status: 403,
-                }
-            );
+        if (response) {
+            return response;
         }
 
         const {id} = await params;
@@ -178,9 +161,9 @@ export async function PUT(
             );
         }
 
-        const user = await User.findById(id);
+        const findUser = await User.findById(id);
 
-        if (!user) {
+        if (!findUser) {
             return NextResponse.json(
                 {
                     message: "کاربر با این شناسه پیدا نشد!",
@@ -191,7 +174,7 @@ export async function PUT(
             );
         }
 
-        if (user.status === "active") {
+        if (findUser.status === "active") {
             return NextResponse.json(
                 {
                     message: "این کاربر در حال حاضر فعال است!",
@@ -204,7 +187,7 @@ export async function PUT(
 
         const ban = await UserBan.findOneAndUpdate(
             {
-                email: user.email,
+                email: findUser.email,
                 isActive: true,
             },
             {
@@ -215,13 +198,13 @@ export async function PUT(
             }
         );
 
-        user.status = "active";
-        await user.save();
+        findUser.status = "active";
+        await findUser.save();
 
         return NextResponse.json(
             {
                 message: "کاربر با موفقیت از مسدودی خارج شد!",
-                user,
+                findUser,
                 ban,
             },
             {
@@ -231,106 +214,6 @@ export async function PUT(
 
     } catch (error) {
         console.error("UNBAN USER ERROR:", error);
-
-        return NextResponse.json(
-            {
-                message: "خطای ناشناخته‌ای در سمت سرور رخ داده است!",
-            },
-            {
-                status: 500,
-            }
-        );
-    }
-}
-
-
-
-
-
-export async function DELETE(
-    req: NextRequest,
-    {params}: Params
-) {
-    try {
-        await connectToDB();
-
-        const currentUser = await getCurrentUser();
-
-        if (!currentUser) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری خود شوید!",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        if (currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "فقط مدیر امکان انجام این عملیات را دارد!",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
-
-        const {id} = await params;
-
-        if (!isValidObjectId(id)) {
-            return NextResponse.json(
-                {
-                    message: "شناسه کاربر معتبر نمی‌باشد!",
-                },
-                {
-                    status: 422,
-                }
-            );
-        }
-
-        const user = await User.findById(id);
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    message: "کاربر با این شناسه پیدا نشد!",
-                },
-                {
-                    status: 404,
-                }
-            );
-        }
-
-        if (user.role === "Admin") {
-            return NextResponse.json(
-                {
-                    message: "امکان حذف مدیر وجود ندارد!",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
-
-        await User.findByIdAndDelete(id);
-
-        await UserBan.deleteOne({
-            email: user.email,
-        });
-
-        return NextResponse.json(
-            {
-                message: "کاربر با موفقیت حذف شد!",
-            },
-            {
-                status: 200,
-            }
-        );
-    } catch (error) {
-        console.error("DELETE USER ERROR:", error);
 
         return NextResponse.json(
             {

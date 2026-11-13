@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const BookingValidator = z
+export const BookingFormSchema = z
     .object({
         checkIn: z.date({
             error: "انتخاب تاریخ ورود الزامی است",
@@ -41,13 +41,6 @@ export const BookingValidator = z
                 error: "شماره موبایل باید ۱۱ رقم و با 09 شروع شود",
             }),
 
-        description: z
-            .string()
-            .max(300, {
-                error: "متن توضیحات نمی‌تواند بیشتر از ۳۰۰ کاراکتر باشد",
-            })
-            .optional()
-            .default(""),
     })
     .refine((data) => data.checkOut > data.checkIn, {
         message: "تاریخ خروج باید بعد از تاریخ ورود باشد",
@@ -66,4 +59,4 @@ export const BookingValidator = z
         path: ["checkIn"],
     });
 
-export type BookingFormValues = z.infer<typeof BookingValidator>;
+export type BookingFormValues = z.infer<typeof BookingFormSchema>;

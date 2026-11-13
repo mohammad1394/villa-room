@@ -1,18 +1,20 @@
 import React from 'react';
-import {getCurrentUser} from "@/utility/getCurrentUser";
-import {redirect} from "next/navigation";
 import AdminDashboardSidebar from "@/components/modules/adminPanel/AdminDashboardSidebar";
 import AdminDashboardHeader from "@/components/modules/adminPanel/AdminDashboardHeader";
-import {UserType} from "@/types/User";
 import {checkRole} from "@/utility/checkRole";
+import {redirect} from "next/navigation";
+
 
 
 export default async function Layout({children,}: {
     children: React.ReactNode
 }) {
 
+    const {response } = await checkRole(["Admin", "SuperAdmin"]);
 
-    checkRole(["Admin" , "SuperAdmin"])
+    if (response) {
+        return redirect("/")
+    }
 
     return (
         <div className="min-h-screen bg-[#f8f9fb]">

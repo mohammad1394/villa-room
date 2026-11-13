@@ -6,7 +6,7 @@ export type TicketMessageType  = {
     _id: string;
     ticketId: string;
     senderId: UserType;
-    senderRole: "User" | "Admin";
+    senderRole: "User" | "Support";
     body: string;
     attachments: TicketAttachmentType[];
     createdAt: string;

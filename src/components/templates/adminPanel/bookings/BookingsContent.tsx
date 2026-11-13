@@ -394,10 +394,10 @@ export default function BookingsConten({bookings}: { bookings: BookingType[] }) 
                                     <td className="px-4 py-3">
 
                                         <div className="flex items-center gap-3">
-                                            {booking.userId.avatar ? (
+                                            {booking.userId?.avatar ? (
                                                 <img
-                                                    src={booking.userId.avatar}
-                                                    alt={booking.userId.fullName}
+                                                    src={booking.userId?.avatar}
+                                                    alt={booking.userId?.fullName}
                                                     className="h-9 w-9 rounded-full object-cover"
                                                 />
                                             ) : (
@@ -407,14 +407,14 @@ export default function BookingsConten({bookings}: { bookings: BookingType[] }) 
 
                                             <div>
                                                 <p className="text-[11px] font-bold text-[#253C4D]">
-                                                    {booking.userId.fullName}
+                                                    {booking.userId?.fullName}
                                                 </p>
 
                                                 <p
                                                     dir="ltr"
                                                     className="mt-1 text-right text-[9px] text-[#A0ACB7]"
                                                 >
-                                                    {booking.userId.phone}
+                                                    {booking.userId?.phone}
                                                 </p>
                                             </div>
 

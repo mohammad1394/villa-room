@@ -197,7 +197,7 @@ function CreateTicketForm() {
             return;
         }
 
-        if (!["high" , "medium"  , "high"].includes(priority)) {
+        if (!["low" , "medium"  , "high"].includes(priority)) {
             showCustomToast(
                 "خطا",
                 "میزان اولویت تیکت را مشخص کنید",

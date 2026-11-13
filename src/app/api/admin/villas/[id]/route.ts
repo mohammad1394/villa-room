@@ -3,7 +3,6 @@ import connectToDB from "@/config/db";
 import Villa from "@/models/Villa";
 
 import { isValidObjectId } from "mongoose";
-import { getCurrentUser } from "@/utility/getCurrentUser";
 import {checkRole} from "@/utility/checkRole";
 
 interface Params {
@@ -12,9 +11,6 @@ interface Params {
     }>;
 }
 
-
-
-
 export async function PUT(
     req: NextRequest,
     { params }: Params
@@ -22,7 +18,11 @@ export async function PUT(
     try {
         await connectToDB();
 
-        checkRole(["Admin" , "SuperAdmin"]);
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
 
         const { id } = await params;
 

@@ -1,301 +1,265 @@
-import { NextRequest, NextResponse } from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
 import Booking from "@/models/Booking";
 import Villa from "@/models/Villa";
-import Review from "@/models/Review";
-import {cookies} from "next/headers";
-import {verifyAccessToken} from "@/utility/auth";
-import UserModel from "@/models/User";
-import {getCurrentUser} from "@/utility/getCurrentUser";
-import user from "@/models/User";
+import {checkRole} from "@/utility/checkRole";
+import {bookingApiSchema} from "@/validator/BookingApiSchema";
+
+import mongoose from "mongoose";
+
+// A "pending" booking that is not confirmed within this time no longer blocks the dates.
+const PENDING_BOOKING_TTL_MS = 30 * 60 * 1000;
+
+type CreatedBooking = {
+    _id: mongoose.Types.ObjectId;
+    status: string;
+    checkIn: Date;
+    checkOut: Date;
+    guests: number;
+    nights: number;
+    totalPrice: number;
+};
+
+const calculateNights = (checkIn: Date, checkOut: Date) => {
+    const start = Date.UTC(
+        checkIn.getUTCFullYear(),
+        checkIn.getUTCMonth(),
+        checkIn.getUTCDate()
+    );
+
+    const end = Date.UTC(
+        checkOut.getUTCFullYear(),
+        checkOut.getUTCMonth(),
+        checkOut.getUTCDate()
+    );
+
+    return Math.round(
+        (end - start) / (1000 * 60 * 60 * 24)
+    );
+};
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
-        const body = await req.json();
+        const {user, response} = await checkRole(["User"]);
 
-        const currentUser = await getCurrentUser();
+        if (response) {
+            return response;
+        }
 
-        if (!currentUser) {
+        const body = await req.json().catch(() => null);
+
+        if (!body) {
             return NextResponse.json(
-                {
-                    message: "لطفا برای ثبت رزرو وارد حساب کاربری خود شوید",
-                },
-                {
-                    status: 403,
-                }
+                {message: "اطلاعات ارسالی معتبر نیست"},
+                {status: 400}
             );
         }
+
+        const validation = bookingApiSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json(
+                {
+                    message: "اطلاعات رزرو معتبر نیست",
+                    errors: validation.error.flatten().fieldErrors,
+                },
+                {status: 400}
+            );
+        }
+
         const {
             villaId,
+            fullName,
+            phoneNumber,
             checkIn,
             checkOut,
             guests,
-        } = body;
+        } = validation.data;
 
+        const nights = calculateNights(checkIn, checkOut);
+        const session = await mongoose.startSession();
+        let createdBooking: CreatedBooking | null = null;
 
-        if (
-            !villaId ||
-            !checkIn ||
-            !checkOut ||
-            !guests
-        ) {
-            return NextResponse.json(
-                {
-                    message:
-                        "لطفاً تمام اطلاعات مورد نیاز برای رزرو را وارد کنید",
-                },
-                {
-                    status: 400,
+        try {
+            await session.withTransaction(async () => {
+                createdBooking = null;
+
+                const villa = await Villa.findOneAndUpdate(
+                    {
+                        _id: villaId,
+                        isActive: true,
+                    },
+                    {
+                        $inc: {bookingLockVersion: 1},
+                    },
+                    {
+                        new: true,
+                        session,
+                    }
+                );
+
+                if (!villa) {
+                    throw new Error("VILLA_NOT_FOUND");
                 }
-            );
-        }
 
-
-        if (guests < 1) {
-            return NextResponse.json(
-                {
-                    message: "تعداد مهمان باید حداقل 1 نفر باشد",
-                },
-                {
-                    status: 400,
+                if (guests > villa.capacity) {
+                    throw new Error("VILLA_CAPACITY_EXCEEDED");
                 }
-            );
-        }
 
+                const pendingCutoff = new Date(
+                    Date.now() - PENDING_BOOKING_TTL_MS
+                );
 
-        const villa = await Villa.findOne({
-            _id: villaId,
-            isActive: true,
-        });
+                const overlappingBooking = await Booking.findOne({
+                    villaId: villa._id,
+                    $or: [
+                        {status: "confirmed"},
+                        {
+                            status: "pending",
+                            createdAt: {$gt: pendingCutoff},
+                        },
+                    ],
+                    checkIn: {
+                        $lt: checkOut,
+                    },
+                    checkOut: {
+                        $gt: checkIn,
+                    },
+                })
+                    .select("_id")
+                    .session(session);
 
-        if (!villa) {
-            return NextResponse.json(
-                {
-                    message: "ویلا یافت نشد یا غیرفعال است",
-                },
-                {
-                    status: 404,
+                if (overlappingBooking) {
+                    throw new Error("BOOKING_DATE_CONFLICT");
                 }
-            );
-        }
 
+                const pricePerNight = villa.pricePerNight;
 
-        if (guests > villa.capacity) {
-            return NextResponse.json(
-                {
-                    message: `ظرفیت این ویلا حداکثر ${villa.capacity} نفر است`,
-                },
-                {
-                    status: 400,
+                if (
+                    !Number.isFinite(pricePerNight) ||
+                    pricePerNight <= 0
+                ) {
+                    throw new Error("INVALID_VILLA_PRICE");
                 }
-            );
+
+                const subtotal = nights * pricePerNight;
+                const serviceFee = Math.round(subtotal * 0.02);
+                const totalPrice = subtotal + serviceFee;
+
+                const bookings = await Booking.create(
+                    [{
+                        userId: user._id,
+                        villaId: villa._id,
+                        fullName,
+                        phoneNumber,
+                        checkIn,
+                        checkOut,
+                        guests,
+                        nights,
+                        pricePerNight,
+                        subtotal,
+                        serviceFee,
+                        totalPrice,
+                        status: "pending",
+                    }],
+                    {session}
+                );
+
+                const saved = bookings[0];
+
+                createdBooking = {
+                    _id: saved._id,
+                    status: saved.status,
+                    checkIn: saved.checkIn,
+                    checkOut: saved.checkOut,
+                    guests: saved.guests,
+                    nights: saved.nights,
+                    totalPrice: saved.totalPrice,
+                };
+            });
+        } finally {
+            await session.endSession();
         }
-
-
-        const startDate = new Date(checkIn);
-        const endDate = new Date(checkOut);
-
-
-        if (
-            isNaN(startDate.getTime()) ||
-            isNaN(endDate.getTime())
-        ) {
-            return NextResponse.json(
-                {
-                    message: "تاریخ ورود یا خروج معتبر نیست",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
-
-
-        if (startDate >= endDate) {
-            return NextResponse.json(
-                {
-                    message:
-                        "تاریخ ورود باید قبل از تاریخ خروج باشد",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
-
-
-        const nights = Math.ceil(
-            (endDate.getTime() - startDate.getTime()) /
-            (1000 * 60 * 60 * 24)
-        );
-
-
-        if (nights < 2) {
-            return NextResponse.json(
-                {
-                    message: "حداقل مدت اقامت 2 شب است",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
-
-
-        const overlappingBooking = await Booking.findOne({
-            villaId,
-            status: {
-                $in: ["pending", "confirmed"],
-            },
-            checkIn: {
-                $lt: endDate,
-            },
-            checkOut: {
-                $gt: startDate,
-            },
-        });
-
-        if (overlappingBooking) {
-            return NextResponse.json(
-                {
-                    message:
-                        "این ویلا در بازه زمانی انتخاب شده قبلاً رزرو شده است",
-                },
-                {
-                    status: 409,
-                }
-            );
-        }
-
-
-        const pricePerNight = villa.pricePerNight;
-
-
-        const subtotal = nights * pricePerNight;
-
-
-        const serviceFee = subtotal * 0.02;
-
-
-        const totalPrice = subtotal + serviceFee;
-
-
-        const newBooking = await Booking.create({
-            userId : currentUser._id ,
-            villaId,
-            checkIn: startDate,
-            checkOut: endDate,
-            guests,
-            nights,
-            pricePerNight,
-            subtotal,
-            serviceFee,
-            totalPrice,
-            status: "pending",
-        });
 
         return NextResponse.json(
             {
                 message: "رزرو ویلا با موفقیت ثبت شد",
-                booking: newBooking,
+                booking: createdBooking,
             },
-            {
-                status: 201,
-            }
+            {status: 201}
         );
     } catch (error) {
-        console.error(error);
+        const errorMessage =
+            error instanceof Error ? error.message : "UNKNOWN_ERROR";
+
+        if (errorMessage === "BOOKING_DATE_CONFLICT") {
+            return NextResponse.json(
+                {
+                    message: "این ویلا در بازه زمانی انتخاب شده قبلاً رزرو شده است",
+                },
+                {status: 409}
+            );
+        }
+
+        if (errorMessage === "VILLA_NOT_FOUND") {
+            return NextResponse.json(
+                {message: "ویلا یافت نشد یا غیرفعال است"},
+                {status: 404}
+            );
+        }
+
+        if (errorMessage === "VILLA_CAPACITY_EXCEEDED") {
+            return NextResponse.json(
+                {message: "تعداد مهمان‌ها بیشتر از ظرفیت ویلا است"},
+                {status: 400}
+            );
+        }
+
+        if (errorMessage === "INVALID_VILLA_PRICE") {
+            return NextResponse.json(
+                {message: "قیمت ویلا معتبر نیست"},
+                {status: 400}
+            );
+        }
+
+        console.error("CREATE BOOKING ERROR:", error);
 
         return NextResponse.json(
-            {
-                message:
-                    "خطای ناشناخته سمت سرور رخ داده است، دوباره تلاش کنید",
-            },
-            {
-                status: 500,
-            }
+            {message: "خطای ناشناخته سمت سرور رخ داده است"},
+            {status: 500}
         );
     }
 }
 
-
-
 export async function GET() {
     try {
+        const {user , response} = await checkRole(["User"]);
+
+        if (response) {
+            return response;
+        }
+
         await connectToDB();
 
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-
-
-
-
-        if (!token) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری شوید",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const tokenPayload = verifyAccessToken(token);
-
-        if (!tokenPayload) {
-            return NextResponse.json(
-                {
-                    message: "احراز هویت نامعتبر است",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const user = await UserModel.findOne(
-            { _id: tokenPayload.userId },
-            "_id"
-        );
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    message: "کاربر پیدا نشد",
-                },
-                {
-                    status: 404,
-                }
-            );
-        }
-
-        const userBooking = await Booking.find({
+        const bookings = await Booking.find({
             userId: user._id,
-        }).lean();
+        })
+            .sort({createdAt: -1})
+            .lean();
 
         return NextResponse.json(
-            {
-                bookings: userBooking,
-            },
-            {
-                status: 200,
-            }
+            {bookings},
+            {status: 200}
         );
 
     } catch (error) {
-        console.error(error);
+        console.error("GET BOOKINGS ERROR:", error);
 
         return NextResponse.json(
-            {
-                message:
-                    "خطای ناشناخته سمت سرور رخ داده است، دوباره تلاش کنید",
-            },
-            {
-                status: 500,
-            }
+            {message: "خطای ناشناخته سمت سرور رخ داده است"},
+            {status: 500}
         );
     }
 }

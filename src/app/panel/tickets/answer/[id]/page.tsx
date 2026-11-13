@@ -71,6 +71,7 @@ async function Page({
             <TicketChat
                 ticket={serializedTicket}
                 messages={serializedMessages}
+                backUrl="/panel/tickets"
             />
         </div>
     );

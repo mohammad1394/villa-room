@@ -479,10 +479,10 @@ export default function ReviewsContent({
 
                                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEF3F7] text-[#60798A]">
 
-                                                {comment.userId.avatar ? (
+                                                {comment.userId?.avatar ? (
                                                     <img
-                                                        src={comment.userId.avatar}
-                                                        alt={comment.userId.fullName}
+                                                        src={comment.userId?.avatar}
+                                                        alt={comment.userId?.fullName}
                                                         className="h-9 w-9 rounded-full object-cover"
                                                     />
                                                 ) : (
@@ -494,14 +494,14 @@ export default function ReviewsContent({
                                             <div>
 
                                                 <p className="text-[11px] font-bold text-[#253C4D]">
-                                                    {comment.userId.fullName}
+                                                    {comment.userId?.fullName}
                                                 </p>
 
                                                 <p
                                                     dir="ltr"
                                                     className="mt-1 text-right text-[9px] text-[#A0ACB7]"
                                                 >
-                                                    {comment.userId.phone}
+                                                    {comment.userId?.phone}
                                                 </p>
 
                                             </div>

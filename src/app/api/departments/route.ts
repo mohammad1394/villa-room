@@ -1,12 +1,20 @@
 import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
 import Department from "@/models/Department";
+import {checkRole} from "@/utility/checkRole";
 
 export async function POST(req: NextRequest) {
     try {
-        await connectToDB();
+   await connectToDB();
+
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
 
         const body = await req.json();
+
         const {title} = body;
 
         if (!title?.trim()) {

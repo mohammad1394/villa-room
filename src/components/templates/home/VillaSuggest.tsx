@@ -45,7 +45,7 @@ async function VillaSuggest() {
             <div className="grid grid-cols-1 gap-[24px] sm:grid-cols-2 lg:grid-cols-4">
                 {
                     suggestedVillas.map(villa => (
-                        <VillaGridCard {...villa}/>
+                        <VillaGridCard {...villa} key={villa._id}/>
                     ))
                 }
             </div>

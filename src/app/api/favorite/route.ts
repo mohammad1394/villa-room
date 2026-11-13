@@ -1,14 +1,20 @@
 import connectToDB from "@/config/db";
 import {NextRequest, NextResponse} from "next/server";
-import {cookies} from "next/headers";
-import {verifyAccessToken} from "@/utility/auth";
-import UserModel from "@/models/User";
 import Villa from "@/models/Villa";
 import Favorite from "@/models/Favorite";
+import {checkRole} from "@/utility/checkRole";
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDB();
+
+        const {user, response} = await checkRole(["User"]);
+
+        if (response) {
+            return response;
+        }
+
+
         const body = await req.json();
         const {villaId} = body;
 
@@ -19,49 +25,6 @@ export async function POST(req: NextRequest) {
                 },
                 {
                     status: 400,
-                }
-            );
-        }
-
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-
-        if (!token) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری شوید",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const tokenPayload = verifyAccessToken(token);
-
-        if (!tokenPayload) {
-            return NextResponse.json(
-                {
-                    message: "احراز هویت نامعتبر است",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const user = await UserModel.findOne(
-            {_id: tokenPayload.userId},
-            "_id"
-        );
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    message: "کاربر پیدا نشد",
-                },
-                {
-                    status: 404,
                 }
             );
         }
@@ -82,7 +45,7 @@ export async function POST(req: NextRequest) {
         }
 
         const favorite = await Favorite.findOne({
-            userId: user._id,
+            userId,
             villaId,
         });
 
@@ -130,62 +93,24 @@ export async function POST(req: NextRequest) {
 }
 
 
-export async function GET(){
-    try{
+export async function GET() {
+    try {
         await connectToDB();
 
-        const cookieStore = await cookies();
+        const {user, response} = await checkRole(["User"]);
 
-        const token = cookieStore.get("token")?.value;
-
-
-        if (!token) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری شوید",
-                },
-                {
-                    status: 401,
-                }
-            );
+        if (response) {
+            return response;
         }
 
-        const tokenPayload = verifyAccessToken(token);
+        const wishlist = await Favorite.find({
+            userId: user._id,
+        }).populate("villaId");
 
-        if (!tokenPayload) {
-            return NextResponse.json(
-                {
-                    message: "احراز هویت نامعتبر است",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const user = await UserModel.findOne(
-            {_id: tokenPayload.userId},
-            "_id"
-        );
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    message: "کاربر پیدا نشد",
-                },
-                {
-                    status: 404,
-                }
-            );
-        }
-
-        const userId = user._id;
-
-        const wishlist = await Favorite.find({userId}).populate("villaId");
-
-        return NextResponse.json(wishlist);
-    }catch(error){
+        return NextResponse.json(wishlist, {status: 200});
+    } catch (error) {
         console.error(error);
+
         return NextResponse.json(
             {
                 message: "خطای ناشناخته سمت سرور رخ داده است",
@@ -193,6 +118,6 @@ export async function GET(){
             {
                 status: 500,
             }
-        )
+        );
     }
 }

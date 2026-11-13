@@ -11,10 +11,10 @@ import {
 
 } from "lucide-react";
 import Link from "next/link";
-import {TicketType} from "@/types/Ticket";
+import {TicketStatus, TicketType} from "@/types/Ticket";
 import {useMemo, useState} from "react";
 
-const statusConfig = {
+const statusConfig  = {
     open: {
         label: "باز",
         className: "bg-blue-50 text-blue-600",
@@ -22,6 +22,10 @@ const statusConfig = {
     pending: {
         label: "در حال بررسی",
         className: "bg-yellow-50 text-yellow-600",
+    },
+    answered: {
+        label : "پاسخ داده شده",
+        className: "bg-green-50 text-green-600",
     },
     closed: {
         label: "بسته شده",

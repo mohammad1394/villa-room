@@ -1,23 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
-import connectToDB from "@/config/db";
-import { verifyAccessToken } from "@/utility/auth";
-import UserModel from "@/models/User";
 import Booking from "@/models/Booking";
 import {BookingType} from "@/types/Booking";
-import Villa from "@/models/Villa";
 import {getCurrentUser} from "@/utility/getCurrentUser";
+import {redirect} from "next/navigation";
 
 
 
 
 export default async function RecentBookings() {
 
-    const user =  getCurrentUser();
+    const user = await getCurrentUser();
 
     if (!user) {
         redirect("/login");
@@ -45,7 +40,7 @@ export default async function RecentBookings() {
                 </h2>
 
                 <Link
-                    href="/panel/bookings"
+                    href="/panel/my-bookings"
                     className="text-[10px] text-blue-600"
                 >
                     مشاهده همه
@@ -132,7 +127,7 @@ export default async function RecentBookings() {
             </div>
 
             <Link
-                href="/panel/bookings"
+                href="/panel/my-bookings"
                 className="mt-4 flex h-[40px] w-full items-center justify-center rounded-[8px] border border-gray-200 text-[10px] text-blue-600"
             >
                 ← مشاهده همه رزروها

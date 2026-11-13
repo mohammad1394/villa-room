@@ -1,22 +1,22 @@
 import connectToDB from "@/config/db";
-import {getCurrentUser} from "@/utility/getCurrentUser";
 import {NextRequest, NextResponse} from "next/server";
 import {isValidObjectId} from "mongoose";
 import Ticket from "@/models/Ticket";
 import TicketMessage from "@/models/TicketMessage";
+import {checkRole} from "@/utility/checkRole";
+
+
+
+
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
+        const {user ,  response } = await checkRole(["User" , "Admin" , "SuperAdmin"]);
 
-        const user = await getCurrentUser();
-
-        if (!user) {
-            return NextResponse.json(
-                {message: "برای ثبت تیکت ابتدا وارد حساب کاربری شوید!"},
-                {status: 401}
-            );
+        if (response) {
+            return response;
         }
 
 
@@ -39,15 +39,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (user.role !== "Admin" && ticket.userId.toString() !== user._id.toString()) {
+        if (user.role === "User" && ticket.userId.toString() !== user._id.toString()) {
             return NextResponse.json(
                 {message: "شما اجازه ارسال پیام در این تیکت را ندارید!"},
                 {status: 403}
             );
         }
-        if (!body?.trim()) {
+        if (typeof body !== "string" || !body.trim()) {
             return NextResponse.json(
-                {message: "متن تیکت رو وارد کنید !"},
+                {message: "متن تیکت را وارد کنید"},
                 {status: 422}
             );
         }
@@ -59,13 +59,13 @@ export async function POST(req: NextRequest) {
         const message = await TicketMessage.create({
             ticketId: ticket._id,
             senderId: user._id,
-            senderRole: user.role,
+            senderRole: user.role === "User" ? "User" : "Support",
             body: body.trim(),
         });
 
         ticket.lastMessageAt = new Date();
-        ticket.lastMessageBy = "user";
-        ticket.status = "open";
+        ticket.lastMessageBy = user.role === "User" ? "User" : "Support";
+        ticket.status = user.role === "User" ? "open" : "answered";
         await ticket.save();
 
         return NextResponse.json({message: "پیام شما با موفقیت ارسال شد!", data: message,}, {status: 201,});
@@ -86,17 +86,12 @@ export async function GET(req: NextRequest) {
     try {
         await connectToDB();
 
+        const {user ,  response } = await checkRole(["User"]);
 
-        const user = await getCurrentUser();
-
-        if (!user) {
-            return NextResponse.json(
-                {
-                    message: "برای مشاهده پیام‌ها ابتدا وارد حساب کاربری شوید!",
-                },
-                {status: 401}
-            );
+        if (response) {
+            return response;
         }
+
 
 
         const searchParams = req.nextUrl.searchParams;

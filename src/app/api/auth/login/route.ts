@@ -6,14 +6,35 @@ import {
     generateRefreshToken,
     validateEmail,
     verifyPassword,
+    hashToken,
+    getDummyPasswordHash,
 } from "@/utility/auth";
+import { rateLimit } from "@/utility/rateLimit";
 import UserModel from "@/models/User";
 
 export async function POST(req: NextRequest) {
+    const limited = rateLimit(req, {
+        key: "login",
+        limit: 10,
+        windowSeconds: 60,
+    });
+
+    if (limited) {
+        return limited;
+    }
+
     try {
         await connectToDB();
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
+
+        if (!body || typeof body !== "object") {
+            return NextResponse.json(
+                { message: "اطلاعات ورود معتبر نیستند" },
+                { status: 422 }
+            );
+        }
+
         const { email, password } = body;
 
         if (typeof email !== "string" || typeof password !== "string") {
@@ -48,17 +69,18 @@ export async function POST(req: NextRequest) {
 
         const user = await UserModel.findOne({ email: cleanEmail });
 
+        // always run bcrypt so response time does not reveal whether the email exists
+        const isPasswordValid = await verifyPassword(
+            password,
+            user?.password ?? (await getDummyPasswordHash())
+        );
+
         if (!user) {
             return NextResponse.json(
                 { message: "ایمیل یا رمز عبور صحیح نمی‌باشد" },
                 { status: 401 }
             );
         }
-
-        const isPasswordValid = await verifyPassword(
-            password,
-            user.password
-        );
 
         if (!isPasswordValid) {
             return NextResponse.json(
@@ -85,7 +107,7 @@ export async function POST(req: NextRequest) {
                 status: "active",
             },
             {
-                $set: { refreshToken },
+                $set: { refreshToken: hashToken(refreshToken) },
             },
             { new: true }
         );

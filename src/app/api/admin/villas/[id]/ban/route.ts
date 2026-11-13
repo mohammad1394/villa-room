@@ -12,6 +12,8 @@ interface Params {
     }>;
 }
 
+
+
 export async function POST(
     req: NextRequest,
     { params }: Params
@@ -19,10 +21,11 @@ export async function POST(
     try {
         await connectToDB();
 
+        const { user, response } = await checkRole(["Admin", "SuperAdmin"]);
 
-        const currentUser = await getCurrentUser();
-
-        checkRole(["Admin" , "SuperAdmin"]);
+        if (response) {
+            return response;
+        }
 
         const { id } = await params;
 
@@ -88,7 +91,7 @@ export async function POST(
             villaId: villa._id,
             reason: reason.trim(),
             bannedUntil: bannedUntil || null,
-            bannedBy: currentUser._id,
+            bannedBy: user._id,
             isActive: true,
         });
 
@@ -119,34 +122,16 @@ export async function POST(
 }
 
 export async function PUT(
-    req: NextRequest,
+    request: NextRequest,
     { params }: Params
 ) {
     try {
         await connectToDB();
 
-        const currentUser = await getCurrentUser();
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
 
-        if (!currentUser) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری خود شوید!",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        if (currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "فقط مدیر امکان انجام این عملیات را دارد!",
-                },
-                {
-                    status: 403,
-                }
-            );
+        if (response) {
+            return response;
         }
 
         const { id } = await params;
@@ -243,29 +228,12 @@ export async function DELETE(
     try {
         await connectToDB();
 
-        const currentUser = await getCurrentUser();
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
 
-        if (!currentUser) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری خود شوید!",
-                },
-                {
-                    status: 401,
-                }
-            );
+        if (response) {
+            return response;
         }
 
-        if (currentUser.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "فقط مدیر امکان انجام این عملیات را دارد!",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
 
         const { id } = await params;
 

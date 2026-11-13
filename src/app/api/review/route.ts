@@ -3,17 +3,40 @@ import {NextRequest, NextResponse} from "next/server";
 import Review from "@/models/Review";
 import Villa from "@/models/Villa";
 import Booking from "@/models/Booking";
-import {cookies} from "next/headers";
-import {verifyAccessToken} from "@/utility/auth";
 import UserModel from "@/models/User";
 import {MongoServerError} from "mongodb";
+import {checkRole} from "@/utility/checkRole";
+import {rateLimit} from "@/utility/rateLimit";
 
 
 export async function POST(req: NextRequest) {
+    const limited = rateLimit(req, {
+        key: "review",
+        limit: 10,
+        windowSeconds: 10 * 60,
+    });
+
+    if (limited) {
+        return limited;
+    }
+
     try {
         await connectToDB();
 
-        const body = await req.json();
+        const { user : currentUser , response } = await checkRole(["User"]);
+
+        if (response) {
+            return response;
+        }
+
+        const body = await req.json().catch(() => null);
+
+        if (!body || typeof body !== "object") {
+            return NextResponse.json(
+                {message: "اطلاعات ارسالی معتبر نیست"},
+                {status: 422}
+            );
+        }
 
 
         const {
@@ -22,29 +45,8 @@ export async function POST(req: NextRequest) {
             comment,
         } = body;
 
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
 
-        if (!token) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری شوید",
-                },
-                {status: 401}
-            );
-        }
-
-        const tokenPayload = verifyAccessToken(token);
-        if (!tokenPayload) {
-            return NextResponse.json(
-                {
-                    message: "احراز هویت نامعتبر است",
-                },
-                {status: 401}
-            );
-        }
-
-        const user = await UserModel.findOne({_id: tokenPayload.userId}, "_id");
+        const user = await UserModel.findOne({_id: currentUser._id}, "_id");
 
         if (!user) {
             return NextResponse.json(
@@ -58,10 +60,11 @@ export async function POST(req: NextRequest) {
 
         const userId = user?._id;
 
+        const validateRating = typeof rating === "number" ? rating : undefined;
 
         if (
             !villaId ||
-            rating === undefined ||
+            validateRating === undefined ||
             !comment?.trim()
         ) {
             return NextResponse.json(
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
         }
 
 
-        if (rating < 1 || rating > 5) {
+        if (validateRating < 1 || validateRating > 5) {
             return NextResponse.json(
                 {
                     message: "امتیاز باید بین 1 تا 5 باشد",
@@ -90,32 +93,17 @@ export async function POST(req: NextRequest) {
         const booking = await Booking.findOne({
             userId,
             villaId,
-        }).select("_id status");
-
-        const bookingId = booking.id;
-
+            status: "completed",
+        }).select("_id");
 
         if (!booking) {
             return NextResponse.json(
-                {
-                    message:
-                        "رزرو معتبری برای این ویلا و کاربر پیدا نشد",
-                },
-                {
-                    status: 404,
-                }
+                { message: "رزرو معتبری پیدا نشد" },
+                { status: 404 }
             );
         }
 
-
-        if (booking.status !== "confirmed") {
-            return NextResponse.json(
-                {
-                    message: "فقط برای رزروهای تأیید شده امکان ثبت نظر وجود دارد",
-                },
-                {status: 400}
-            );
-        }
+        const bookingId = booking._id;
 
         const villa = await Villa.findById(villaId);
 
@@ -195,7 +183,7 @@ export async function GET(req: NextRequest) {
 
         const reviews = await Review.find({
             villaId,
-            status: "published",
+            status: "approved",
         } , "userId rating comment createdAt").populate("userId", "-_id fullName avatar");
         return NextResponse.json(reviews);
 

@@ -1,7 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
 import Booking from "@/models/Booking";
-import {getCurrentUser} from "@/utility/getCurrentUser";
-import connectToDB from "@/config/db";
 import {isValidObjectId} from "mongoose";
 import {checkRole} from "@/utility/checkRole";
 
@@ -14,11 +12,11 @@ const validStatuses = [
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        await connectToDB();
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
 
-        const currentUser = await getCurrentUser();
-
-        checkRole(["Admin" , "SuperAdmin"]);
+        if (response) {
+            return response;
+        }
 
         const { id } = await params;
         const { status } = await req.json();

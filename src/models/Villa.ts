@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const villaSchema = new mongoose.Schema(
     {
@@ -88,6 +88,13 @@ const villaSchema = new mongoose.Schema(
         isActive: {
             type: Boolean,
             default: true,
+        },
+
+        bookingLockVersion: {
+            type: Number,
+            default: 0,
+            min: 0,
+            select: false,
         },
     },
     {

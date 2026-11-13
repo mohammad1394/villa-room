@@ -114,7 +114,7 @@ export default function RecentBookings({bookings} : {bookings : BookingType[]}) 
                                             text-[10px]
                                             ${
                                             booking.status ===
-                                            "completed" || "confirm"
+                                            "completed" 
                                                 ? "bg-[#eaf8f0] text-[#24945d] "
                                                 : booking.status ===
                                                 "pending"

@@ -1,15 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDB from "@/config/db";
-import { cookies } from "next/headers";
-import { verifyAccessToken } from "@/utility/auth";
 import UserModel from "@/models/User";
 import Contact from "@/models/Contact";
+import {checkRole} from "@/utility/checkRole";
+import {rateLimit} from "@/utility/rateLimit";
 
 export async function POST(req: NextRequest) {
+    const limited = rateLimit(req, {
+        key: "contact",
+        limit: 5,
+        windowSeconds: 10 * 60,
+    });
+
+    if (limited) {
+        return limited;
+    }
+
     try {
         await connectToDB();
 
-        const body = await req.json();
+        const {user, response} = await checkRole(["User" , "Admin" , "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
+
+        const body = await req.json().catch(() => null);
+
+        if (!body || typeof body !== "object") {
+            return NextResponse.json(
+                { message: "اطلاعات ارسالی معتبر نیست" },
+                { status: 422 }
+            );
+        }
 
         const {
             fullName,
@@ -20,21 +43,33 @@ export async function POST(req: NextRequest) {
         } = body;
 
 
-        if (!fullName || !fullName.trim()) {
+        const cleanFullName =
+            typeof fullName === "string" ? fullName.trim() : "";
+
+        const cleanEmail =
+            typeof email === "string" ? email.trim().toLowerCase() : "";
+
+        const cleanPhoneNumber =
+            typeof phone === "string" ? phone.trim() : "";
+
+        const cleanMessage =
+            typeof message === "string" ? message.trim() : "";
+
+        if (!cleanFullName) {
             return NextResponse.json(
                 { message: "نام خود را وارد کنید" },
                 { status: 422 }
             );
         }
 
-        if (!email || !email.trim()) {
+        if (!cleanEmail) {
             return NextResponse.json(
                 { message: "ایمیل خود را وارد کنید" },
                 { status: 422 }
             );
         }
 
-        if (!phone || !phone.trim()) {
+        if (!cleanPhoneNumber) {
             return NextResponse.json(
                 { message: "شماره تلفن خود را وارد کنید" },
                 { status: 422 }
@@ -48,7 +83,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (!message || message.trim().length < 10) {
+        if (!cleanMessage || cleanMessage.length < 10) {
             return NextResponse.json(
                 {
                     message:
@@ -58,47 +93,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const cleanFullName = fullName.trim();
-        const cleanEmail = email.trim().toLowerCase();
-        const cleanPhone = phone.trim();
-        const cleanMessage = message.trim();
 
-
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-
-        if (!token) {
-            return NextResponse.json(
-                {
-                    message: "ابتدا وارد حساب کاربری شوید",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const tokenPayload = verifyAccessToken(token);
-
-        if (!tokenPayload) {
-            return NextResponse.json(
-                {
-                    message: "احراز هویت نامعتبر است",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        const user = await UserModel.findOne(
+        const findUser = await UserModel.findOne(
             {
-                _id: tokenPayload.userId,
+                _id: user._id,
             },
             "_id"
         );
 
-        if (!user) {
+        if (!findUser) {
             return NextResponse.json(
                 {
                     message: "کاربر پیدا نشد",
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
             userId: user._id,
             fullName: cleanFullName,
             email: cleanEmail,
-            phone: cleanPhone,
+            phone: cleanPhoneNumber,
             subject,
             message: cleanMessage,
         });
@@ -122,7 +125,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
             {
                 message: "پیام شما با موفقیت ثبت شد",
-                contact: newMessage,
+                contactId: newMessage._id,
             },
             {
                 status: 201,

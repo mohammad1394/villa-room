@@ -4,10 +4,17 @@ import mongoose from "mongoose";
 
 import Department from "@/models/Department";
 import SubDepartment from "@/models/SubDepartment";
+import {checkRole} from "@/utility/checkRole";
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDB();
+
+        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+
+        if (response) {
+            return response;
+        }
 
         const body = await req.json();
 

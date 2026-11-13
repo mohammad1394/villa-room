@@ -32,62 +32,44 @@ export default function DashboardSidebar() {
         {
             title: "داشبورد",
             icon: BarChart3,
-            active: pathname === "/panel",
+            active: pathname === "/admin-panel",
             link: "/admin-panel",
         },
         {
             title: "ویلاها",
             icon: Home,
-            active: pathname === "/panel/villas",
+            active: pathname === "/admin-panel/villas",
             link: "/admin-panel/villas",
         },
         {
             title: "رزروها",
             icon: CalendarDays,
-            active: pathname === "/panel/bookings",
+            active: pathname === "/admin-panel/bookings",
             link: "/admin-panel/bookings",
         },
         {
             title: "کاربران",
             icon: Users,
-            active: pathname === "/panel/users",
+            active: pathname === "/admin-panel/users",
             link: "/admin-panel/users",
-        },
-        {
-            title: "تراکنش‌ها",
-            icon: CreditCard,
-            active: pathname === "/panel/transactions",
-            link: "/admin-panel/transactions",
         },
         {
             title: "نظرات",
             icon: MessageCircle,
-            active: pathname === "/panel/reviews",
+            active: pathname === "/admin-panel/reviews",
             link: "/admin-panel/reviews",
         },
         {
             title: "تیکت ها",
             icon: MessageCircle,
-            active: pathname === "/panel/tickets",
+            active: pathname === "/admin-panel/tickets",
             link: "/admin-panel/tickets",
         },
         {
             title: "کدهای تخفیف",
             icon: Tag,
-            active: pathname === "/panel/dicounts",
+            active: pathname === "/admin-panel/dicounts",
             link: "/admin-panel/discounts",
-        },
-        {
-            title: "گزارش‌ها",
-            icon: FileText,
-            active: pathname === "/panel/reports",
-            link: "/admin-panel/reports",
-        },
-        {
-            title: "تنظیمات",
-            icon: Settings,
-            active: pathname === "/panel/settings",
-            link: "/admin-panel/settings",
         },
     ];
 
@@ -109,8 +91,12 @@ export default function DashboardSidebar() {
 
                 router.push("/");
             }
+            if (!response.ok) {
+                showCustomToast("خطا" ,   "خروج شما با خطا مواجه شد","x" , "error");
+                router.push("/");
+            }
+
         } catch (error) {
-            console.error(error);
 
             showCustomToast(
                 "خطا",
