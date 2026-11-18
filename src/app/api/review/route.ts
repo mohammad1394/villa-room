@@ -7,6 +7,7 @@ import UserModel from "@/models/User";
 import {MongoServerError} from "mongodb";
 import {checkRole} from "@/utility/checkRole";
 import {rateLimit} from "@/utility/rateLimit";
+import {createReviewSchema, reviewQuerySchema} from "@/validator/reviewValidator";
 
 
 export async function POST(req: NextRequest) {
@@ -28,23 +29,21 @@ export async function POST(req: NextRequest) {
         if (response) {
             return response;
         }
-
         const body = await req.json().catch(() => null);
 
-        if (!body || typeof body !== "object") {
+        const result = createReviewSchema.safeParse(body);
+
+        if (!result.success) {
             return NextResponse.json(
-                {message: "اطلاعات ارسالی معتبر نیست"},
-                {status: 422}
+                {
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                { status: 422 }
             );
         }
 
-
-        const {
-            villaId,
-            rating,
-            comment,
-        } = body;
-
+        const { villaId, rating, comment } = result.data;
 
         const user = await UserModel.findOne({_id: currentUser._id}, "_id");
 
@@ -60,35 +59,6 @@ export async function POST(req: NextRequest) {
 
         const userId = user?._id;
 
-        const validateRating = typeof rating === "number" ? rating : undefined;
-
-        if (
-            !villaId ||
-            validateRating === undefined ||
-            !comment?.trim()
-        ) {
-            return NextResponse.json(
-                {
-                    message:
-                        "لطفاً تمام اطلاعات مورد نیاز برای ثبت نظر را وارد کنید",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
-
-
-        if (validateRating < 1 || validateRating > 5) {
-            return NextResponse.json(
-                {
-                    message: "امتیاز باید بین 1 تا 5 باشد",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
 
         const booking = await Booking.findOne({
             userId,
@@ -124,7 +94,7 @@ export async function POST(req: NextRequest) {
             villaId,
             bookingId,
             rating,
-            comment: comment.trim(),
+            comment,
             status: "pending",
         });
 
@@ -169,17 +139,23 @@ export async function GET(req: NextRequest) {
     try {
         await connectToDB();
 
-        const {searchParams} = new URL(req.url);
-        const villaId = searchParams.get("villaId");
+        const { searchParams } = new URL(req.url);
 
-        if (!villaId) {
-            return NextResponse.json({
-                    message: "شناسه ویلا ارسال نشده است "
-                },
+        const result = reviewQuerySchema.safeParse({
+            villaId: searchParams.get("villaId"),
+        });
+
+        if (!result.success) {
+            return NextResponse.json(
                 {
-                    status: 400,
-                })
+                    message: "شناسه ویلا ارسال نشده یا معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                { status: 422 }
+            );
         }
+
+        const { villaId } = result.data;
 
         const reviews = await Review.find({
             villaId,

@@ -28,7 +28,7 @@ import { Controller, useForm } from "react-hook-form";
 import {
     BookingFormValues,
     BookingFormSchema,
-} from "@/validator/BookingFormSchema";
+} from "@/validator/bookingValidator";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { showCustomToast } from "@/components/modules/layout/toast/toast";
 

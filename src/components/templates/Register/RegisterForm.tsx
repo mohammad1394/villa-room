@@ -15,7 +15,7 @@ import {useForm} from "react-hook-form";
 import {
     RegisterValidator,
     type RegisterFormValues,
-} from "@/validator/RegisterValidator";
+} from "@/validator/registerValidator";
 
 import RegisterImageSection from "@/components/templates/Register/loginImageSection";
 import {showCustomToast} from "@/components/modules/layout/toast/toast";

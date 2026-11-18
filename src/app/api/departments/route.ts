@@ -2,6 +2,7 @@ import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
 import Department from "@/models/Department";
 import {checkRole} from "@/utility/checkRole";
+import {DepartmentSchema} from "@/validator/departmentValidator";
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,20 +14,23 @@ export async function POST(req: NextRequest) {
             return response;
         }
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
 
-        const {title} = body;
+        const result = DepartmentSchema.safeParse(body);
 
-        if (!title?.trim()) {
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "عنوان دپارتمان الزامی می‌باشد!",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
                 {
                     status: 422,
                 }
             );
         }
+
+        const { title } = result.data;
 
         const existDepartment = await Department.findOne({
             title: title?.trim(),

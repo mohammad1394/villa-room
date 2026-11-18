@@ -1,27 +1,35 @@
 import connectToDB from "@/config/db";
-import {getCurrentUser} from "@/utility/getCurrentUser";
 import {NextRequest, NextResponse} from "next/server";
-import mongoose from "mongoose";
-
 import Ticket from "@/models/Ticket";
 import Department from "@/models/Department";
 import SubDepartment from "@/models/SubDepartment";
+import {checkRole} from "@/utility/checkRole";
+import {createTicketSchema} from "@/validator/ticketValidator";
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
 
-        const user = await getCurrentUser();
+        const {user ,  response } = await checkRole(["User" , "Admin" , "SuperAdmin"]);
 
-        if (!user) {
-            return NextResponse.json(
-                {message: "برای ثبت تیکت ابتدا وارد حساب کاربری شوید!"},
-                {status: 401}
-            );
+        if (response) {
+            return response;
         }
 
-        const reqBody = await req.json();
+        const reqBody = await req.json().catch(() => null);
+
+        const result = createTicketSchema.safeParse(reqBody);
+
+        if (!result.success) {
+            return NextResponse.json(
+                {
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                { status: 422 }
+            );
+        }
 
         const {
             title,
@@ -29,61 +37,8 @@ export async function POST(req: NextRequest) {
             department,
             subDepartment,
             priority,
-        } = reqBody;
+        } = result.data;
 
-
-        if (!title?.trim()) {
-            return NextResponse.json(
-                {message: "عنوان تیکت الزامی است!"},
-                {status: 422}
-            );
-        }
-
-        if (!body?.trim() || body.trim().length < 10) {
-            return NextResponse.json(
-                {message: "متن تیکت باید حداقل ۱۰ کاراکتر باشد!"},
-                {status: 422}
-            );
-        }
-
-        if (!department) {
-            return NextResponse.json(
-                {message: "انتخاب دپارتمان الزامی است!"},
-                {status: 422}
-            );
-        }
-
-        if (!subDepartment) {
-            return NextResponse.json(
-                {message: "انتخاب زیر دپارتمان الزامی است!"},
-                {status: 422}
-            );
-        }
-
-
-        if (!mongoose.Types.ObjectId.isValid(department)) {
-            return NextResponse.json(
-                {message: "دپارتمان انتخاب شده معتبر نیست!"},
-                {status: 422}
-            );
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(subDepartment)) {
-            return NextResponse.json(
-                {message: "زیر دپارتمان انتخاب شده معتبر نیست!"},
-                {status: 422}
-            );
-        }
-
-
-
-
-        if (!["low", "medium", "high"].includes(priority)) {
-            return NextResponse.json(
-                {message: "اولویت تیکت معتبر نیست!"},
-                {status: 422}
-            );
-        }
 
 
         const departmentExists = await Department.findById(department);
@@ -114,8 +69,8 @@ export async function POST(req: NextRequest) {
 
         const ticket = await Ticket.create({
             userId: user._id,
-            title: title.trim(),
-            body: body.trim(),
+            title,
+            body,
             department,
             subDepartment,
             priority

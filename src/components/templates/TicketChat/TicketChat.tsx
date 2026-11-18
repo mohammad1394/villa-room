@@ -350,6 +350,7 @@ return (
                             onKeyDown={handleKeyDown}
                             placeholder="پیام خود را بنویسید..."
                             rows={1}
+                            disabled={ticket.status === "closed" || isLoading}
                             className="max-h-[110px] min-h-[44px] flex-1 resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 transition outline-none placeholder:text-gray-400 focus:border-[var(--primary)] focus:bg-white"
                         />
 
@@ -357,9 +358,7 @@ return (
                         <button
                             type="button"
                             onClick={handleSendMessage}
-                            disabled={
-                                !message.trim()
-                            }
+                            disabled={!message.trim() || isLoading}
                             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <Send size={18}/>

@@ -4,6 +4,8 @@ import {isValidObjectId} from "mongoose";
 import Ticket from "@/models/Ticket";
 import TicketMessage from "@/models/TicketMessage";
 import {checkRole} from "@/utility/checkRole";
+import {createTicketSchema} from "@/validator/ticketValidator";
+import {createTicketMessageSchema, ticketMessageQuerySchema} from "@/validator/ticketMessageValidator";
 
 
 
@@ -20,16 +22,20 @@ export async function POST(req: NextRequest) {
         }
 
 
-        const reqBody = await req.json();
+        const reqBody = await req.json().catch(() =>  null);
 
-        const {
-            ticketId,
-            body,
-        } = reqBody;
+        const result = createTicketMessageSchema.safeParse(reqBody);
 
-        if (!ticketId || !isValidObjectId(ticketId)) {
-            return NextResponse.json({message: "شناسه تیکت معتبر نمی‌باشد!",}, {status: 422,});
+        if (!result.success) {
+            return NextResponse.json(
+                {
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                { status: 422 }
+            );
         }
+        const {ticketId, body} = result.data;
 
         const ticket = await Ticket.findOne({_id: ticketId,});
         if (!ticket) {
@@ -43,12 +49,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 {message: "شما اجازه ارسال پیام در این تیکت را ندارید!"},
                 {status: 403}
-            );
-        }
-        if (typeof body !== "string" || !body.trim()) {
-            return NextResponse.json(
-                {message: "متن تیکت را وارد کنید"},
-                {status: 422}
             );
         }
 
@@ -92,24 +92,30 @@ export async function GET(req: NextRequest) {
             return response;
         }
 
-
-
         const searchParams = req.nextUrl.searchParams;
-        const ticketId = searchParams.get("ticketId");
 
+        const id = searchParams.get("ticketId");
 
-        if (!ticketId || !isValidObjectId(ticketId)) {
+        const result = ticketMessageQuerySchema.safeParse({
+            ticketId : id,
+        });
+
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "شناسه تیکت معتبر نمی‌باشد!",
+                    message: "شناسه تیکت معتبر نمیباشد",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                {status: 422}
+                {
+                    status: 422,
+                }
             );
         }
 
+        const { ticketId } = result.data;
 
         const ticket = await Ticket.findOne({
-            _id: ticketId,
+            _id: ticketId ,
             userId: user._id,
         }).lean();
 

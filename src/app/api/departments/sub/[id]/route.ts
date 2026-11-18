@@ -1,24 +1,29 @@
-import {isValidObjectId} from "mongoose";
-import {NextResponse} from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 import SubDepartment from "@/models/SubDepartment";
 import connectToDB from "@/config/db";
+import {departmentIdSchema} from "@/validator/departmentValidator";
+import {Params} from "@/types/Params";
 
 export async function GET(
-    req: Request,
-    {params}: { params: Promise<{ id: string }> }
+    req: NextRequest,
+    { params }: {
+        params: Promise<{ id: string }>;
+    }
 ) {
     try {
 
         await connectToDB();
 
 
-        const {id} = await params;
+        const { id } = await params;
 
+        const result = departmentIdSchema.safeParse({ id });
 
-        if (!id || !isValidObjectId(id)) {
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "شناسه دپارتمان ارسال شده معتبر نمی‌باشد!",
+                    message: "شناسه دپارتمان معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
                 {
                     status: 422,

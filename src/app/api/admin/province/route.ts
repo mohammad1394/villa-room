@@ -1,67 +1,40 @@
 import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
 import Province from "@/models/Province";
-import {getCurrentUser} from "@/utility/getCurrentUser";
 import {checkRole} from "@/utility/checkRole";
+import {createProvinceSchema} from "@/validator/provinceValidator";
 
 export async function POST(req: NextRequest) {
     try {
         await connectToDB();
 
-        const user = await getCurrentUser();
+        const {response} = await checkRole(["Admin", "SuperAdmin"]);
 
-        if (!user) {
+        if (response) {
+            return response;
+        }
+        const body = await req.json().catch(() => null);
+
+        const result = createProvinceSchema.safeParse(body);
+
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "ابتدا وارد حساب کاربری شوید",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                {
-                    status: 401,
-                }
+                {status: 422}
             );
         }
 
-        if (user.role !== "Admin") {
-            return NextResponse.json(
-                {
-                    message: "شما دسترسی لازم برای این عملیات را ندارید",
-                },
-                {
-                    status: 403,
-                }
-            );
-        }
 
-        const body = await req.json();
+        const {title, slug, cities} = result.data;
 
-        const {title, slug, cities} = body;
-
-        if (!title || !slug) {
-            return NextResponse.json(
-                {
-                    message: "عنوان و slug استان الزامی است",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
-
-        if (cities && !Array.isArray(cities)) {
-            return NextResponse.json(
-                {
-                    message: "cities باید به صورت آرایه ارسال شود",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
 
         const existingProvince = await Province.findOne({
             $or: [
-                {title: title.trim()},
-                {slug: slug.trim()},
+                {title},
+                {slug},
             ],
         });
 
@@ -77,9 +50,9 @@ export async function POST(req: NextRequest) {
         }
 
         const province = await Province.create({
-            title: title.trim(),
-            slug: slug.trim(),
-            cities: cities || [],
+            title,
+            slug,
+            cities,
         });
 
         return NextResponse.json(
@@ -110,7 +83,7 @@ export async function GET() {
     try {
         await connectToDB();
 
-        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+        const {response} = await checkRole(["Admin", "SuperAdmin"]);
 
         if (response) {
             return response;

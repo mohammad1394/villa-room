@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+
 export const LoginValidator = z.object({
     email: z
         .string({
@@ -34,3 +35,20 @@ export const OtpLoginValidator = z.object({
 
 export type LoginFormValues = z.infer<typeof LoginValidator>;
 export type OtpLoginFormValues = z.infer<typeof OtpLoginValidator>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

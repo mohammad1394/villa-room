@@ -96,11 +96,6 @@ export default function UsersConent({users}: { users: UserType[] }) {
         setEditUserModalOpen(true);
     };
 
-    // const handleDeleteUser = async () => {
-    //     const res = await fetch(`/api/user/${user._id}`, {
-    //         method: "DELETE",
-    //     })
-    // }
     const handleBanUser = (user : UserType) =>  {
         setSelectedUser(user);
         setBannedUserModalOpen(true);

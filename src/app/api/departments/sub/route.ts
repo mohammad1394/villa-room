@@ -1,10 +1,11 @@
 import connectToDB from "@/config/db";
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
+
 
 import Department from "@/models/Department";
 import SubDepartment from "@/models/SubDepartment";
 import {checkRole} from "@/utility/checkRole";
+import {SubDepartmentSchema} from "@/validator/departmentValidator";
 
 export async function POST(req: NextRequest) {
     try {
@@ -16,39 +17,24 @@ export async function POST(req: NextRequest) {
             return response;
         }
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
 
-        const { title, department } = body;
+        const result = SubDepartmentSchema.safeParse(body);
 
-
-        if (!title?.trim()) {
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "عنوان زیر دپارتمان الزامی است!",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                { status: 422 }
-            );
-        }
-
-
-        if (!department) {
-            return NextResponse.json(
                 {
-                    message: "انتخاب دپارتمان الزامی است!",
-                },
-                { status: 422 }
-            );
-        }
+                    status: 422,
+                }
+            )};
+
+        const {title , department} = result.data;
 
 
-        if (!mongoose.Types.ObjectId.isValid(department)) {
-            return NextResponse.json(
-                {
-                    message: "شناسه دپارتمان معتبر نیست!",
-                },
-                { status: 422 }
-            );
-        }
 
 
         const departmentExists = await Department.findById(department);

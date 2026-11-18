@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDB from "@/config/db";
 import Villa from "@/models/Villa";
-import { isValidObjectId } from "mongoose";
-import { getCurrentUser } from "@/utility/getCurrentUser";
 import VillaBan from "@/models/VillaBan";
 import {checkRole} from "@/utility/checkRole";
+import {createVillaBanSchema, villaInfoQuerySchema} from "@/validator/villaValidator";
 
 interface Params {
     params: Promise<{
         id: string;
     }>;
 }
-
-
 
 export async function POST(
     req: NextRequest,
@@ -21,7 +18,10 @@ export async function POST(
     try {
         await connectToDB();
 
-        const { user, response } = await checkRole(["Admin", "SuperAdmin"]);
+        const { user, response } = await checkRole([
+            "Admin",
+            "SuperAdmin",
+        ]);
 
         if (response) {
             return response;
@@ -29,34 +29,33 @@ export async function POST(
 
         const { id } = await params;
 
-        if (!isValidObjectId(id)) {
+        const idResult = villaInfoQuerySchema.safeParse({ id });
+
+        if (!idResult.success) {
             return NextResponse.json(
                 {
                     message: "شناسه ویلا معتبر نمی‌باشد!",
+                    errors: idResult.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
 
-        const {
-            reason,
-            bannedUntil,
-        } = body;
+        const result = createVillaBanSchema.safeParse(body);
 
-        if (!reason?.trim()) {
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "علت مسدود کردن ویلا را وارد کنید!",
+                    message: "اطلاعات وارد شده معتبر نیست!",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
+
+        const { reason, bannedUntil } = result.data;
 
         const villa = await Villa.findById(id);
 
@@ -65,14 +64,12 @@ export async function POST(
                 {
                     message: "ویلایی با این شناسه پیدا نشد!",
                 },
-                {
-                    status: 404,
-                }
+                { status: 404 }
             );
         }
 
         const existingVillaBan = await VillaBan.findOne({
-            villaId: id,
+            villaId: villa._id,
             isActive: true,
         });
 
@@ -81,16 +78,14 @@ export async function POST(
                 {
                     message: "این ویلا در حال حاضر مسدود است!",
                 },
-                {
-                    status: 409,
-                }
+                { status: 409 }
             );
         }
 
         const bannedVilla = await VillaBan.create({
             villaId: villa._id,
-            reason: reason.trim(),
-            bannedUntil: bannedUntil || null,
+            reason,
+            bannedUntil: bannedUntil ?? null,
             bannedBy: user._id,
             isActive: true,
         });
@@ -103,9 +98,7 @@ export async function POST(
                 message: "ویلا با موفقیت مسدود شد!",
                 bannedVilla,
             },
-            {
-                status: 201,
-            }
+            { status: 201 }
         );
     } catch (error) {
         console.error("BAN VILLA ERROR:", error);
@@ -114,21 +107,22 @@ export async function POST(
             {
                 message: "خطای ناشناخته‌ای در سمت سرور رخ داده است!",
             },
-            {
-                status: 500,
-            }
+            { status: 500 }
         );
     }
 }
 
 export async function PUT(
-    request: NextRequest,
+    req : NextRequest,
     { params }: Params
 ) {
     try {
         await connectToDB();
 
-        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+        const { response } = await checkRole([
+            "Admin",
+            "SuperAdmin",
+        ]);
 
         if (response) {
             return response;
@@ -136,14 +130,15 @@ export async function PUT(
 
         const { id } = await params;
 
-        if (!isValidObjectId(id)) {
+        const idResult = villaInfoQuerySchema.safeParse({ id });
+
+        if (!idResult.success) {
             return NextResponse.json(
                 {
                     message: "شناسه ویلا معتبر نمی‌باشد!",
+                    errors: idResult.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
 
@@ -154,9 +149,7 @@ export async function PUT(
                 {
                     message: "ویلایی با این شناسه پیدا نشد!",
                 },
-                {
-                    status: 404,
-                }
+                { status: 404 }
             );
         }
 
@@ -165,9 +158,7 @@ export async function PUT(
                 {
                     message: "این ویلا در حال حاضر فعال است!",
                 },
-                {
-                    status: 409,
-                }
+                { status: 409 }
             );
         }
 
@@ -189,9 +180,7 @@ export async function PUT(
                 {
                     message: "مسدودی فعالی برای این ویلا پیدا نشد!",
                 },
-                {
-                    status: 404,
-                }
+                { status: 404 }
             );
         }
 
@@ -203,9 +192,7 @@ export async function PUT(
                 message: "ویلا با موفقیت از مسدودی خارج شد!",
                 villaBan,
             },
-            {
-                status: 200,
-            }
+            { status: 200 }
         );
     } catch (error) {
         console.error("UNBAN VILLA ERROR:", error);
@@ -214,37 +201,39 @@ export async function PUT(
             {
                 message: "خطای ناشناخته‌ای در سمت سرور رخ داده است!",
             },
-            {
-                status: 500,
-            }
+            { status: 500 }
         );
     }
 }
 
+// DELETE: Delete Villa
 export async function DELETE(
-    req: NextRequest,
+    req : NextRequest,
     { params }: Params
 ) {
     try {
         await connectToDB();
 
-        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+        const { response } = await checkRole([
+            "Admin",
+            "SuperAdmin",
+        ]);
 
         if (response) {
             return response;
         }
 
-
         const { id } = await params;
 
-        if (!isValidObjectId(id)) {
+        const idResult = villaInfoQuerySchema.safeParse({ id });
+
+        if (!idResult.success) {
             return NextResponse.json(
                 {
                     message: "شناسه ویلا معتبر نمی‌باشد!",
+                    errors: idResult.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
 
@@ -255,25 +244,21 @@ export async function DELETE(
                 {
                     message: "ویلایی با این شناسه پیدا نشد!",
                 },
-                {
-                    status: 404,
-                }
+                { status: 404 }
             );
         }
-
-        await Villa.findByIdAndDelete(id);
 
         await VillaBan.deleteMany({
             villaId: villa._id,
         });
 
+        await Villa.findByIdAndDelete(villa._id);
+
         return NextResponse.json(
             {
                 message: "ویلا با موفقیت حذف شد!",
             },
-            {
-                status: 200,
-            }
+            { status: 200 }
         );
     } catch (error) {
         console.error("DELETE VILLA ERROR:", error);
@@ -282,9 +267,7 @@ export async function DELETE(
             {
                 message: "خطای ناشناخته‌ای در سمت سرور رخ داده است!",
             },
-            {
-                status: 500,
-            }
+            { status: 500 }
         );
     }
 }

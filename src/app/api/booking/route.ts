@@ -3,11 +3,10 @@ import connectToDB from "@/config/db";
 import Booking from "@/models/Booking";
 import Villa from "@/models/Villa";
 import {checkRole} from "@/utility/checkRole";
-import {bookingApiSchema} from "@/validator/BookingApiSchema";
+import {bookingApiSchema} from "@/validator/bookingValidator";
 
 import mongoose from "mongoose";
 
-// A "pending" booking that is not confirmed within this time no longer blocks the dates.
 const PENDING_BOOKING_TTL_MS = 30 * 60 * 1000;
 
 type CreatedBooking = {

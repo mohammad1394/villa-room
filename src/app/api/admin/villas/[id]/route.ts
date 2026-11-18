@@ -1,15 +1,14 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import connectToDB from "@/config/db";
 import Villa from "@/models/Villa";
+import { checkRole } from "@/utility/checkRole";
+import {
+    villaInfoQuerySchema,
+    updateVillaSchema,
+} from "@/validator/villaValidator";
+import {Params} from "@/types/Params";
 
-import { isValidObjectId } from "mongoose";
-import {checkRole} from "@/utility/checkRole";
-
-interface Params {
-    params: Promise<{
-        id: string;
-    }>;
-}
 
 export async function PUT(
     req: NextRequest,
@@ -18,7 +17,10 @@ export async function PUT(
     try {
         await connectToDB();
 
-        const { response } = await checkRole(["Admin", "SuperAdmin"]);
+        const { response } = await checkRole([
+            "Admin",
+            "SuperAdmin",
+        ]);
 
         if (response) {
             return response;
@@ -26,31 +28,45 @@ export async function PUT(
 
         const { id } = await params;
 
-        if (!isValidObjectId(id)) {
+        const idResult = villaInfoQuerySchema.safeParse({ id });
+
+        if (!idResult.success) {
             return NextResponse.json(
                 {
-                    message: "شناسه ویلا معتبر نمی‌باشد!",
+                    message: "شناسه ویلا معتبر نیست",
+                    errors: idResult.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
 
-        const villa = await Villa.findById(id);
+        const { villaId } = idResult.data;
+
+
+        const villa = await Villa.findById(villaId);
 
         if (!villa) {
             return NextResponse.json(
                 {
                     message: "ویلایی با این شناسه پیدا نشد!",
                 },
-                {
-                    status: 404,
-                }
+                { status: 404 }
             );
         }
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
+
+        const result = updateVillaSchema.safeParse(body);
+
+        if (!result.success) {
+            return NextResponse.json(
+                {
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                { status: 422 }
+            );
+        }
 
         const {
             title,
@@ -65,32 +81,11 @@ export async function PUT(
             bedrooms,
             bathrooms,
             amenities,
-        } = body;
+        } = result.data;
 
-        if (!title?.trim()) {
-            return NextResponse.json(
-                {
-                    message: "عنوان ویلا را وارد کنید!",
-                },
-                {
-                    status: 422,
-                }
-            );
-        }
 
-        if (!description?.trim()) {
-            return NextResponse.json(
-                {
-                    message: "توضیحات ویلا را وارد کنید!",
-                },
-                {
-                    status: 422,
-                }
-            );
-        }
-
-        villa.title = title.trim();
-        villa.description = description.trim();
+        villa.title = title;
+        villa.description = description;
         villa.type = type;
         villa.province = province;
         villa.city = city;
@@ -109,10 +104,9 @@ export async function PUT(
                 message: "اطلاعات ویلا با موفقیت ویرایش شد!",
                 villa,
             },
-            {
-                status: 200,
-            }
+            { status: 200 }
         );
+
     } catch (error) {
         console.error("UPDATE VILLA ERROR:", error);
 
@@ -120,9 +114,7 @@ export async function PUT(
             {
                 message: "خطای ناشناخته‌ای در سمت سرور رخ داده است!",
             },
-            {
-                status: 500,
-            }
+            { status: 500 }
         );
     }
 }

@@ -10,8 +10,6 @@ async function Page() {
 
     const USER =  getCurrentUser();
 
-    console.log(USER);
-
     const users = await User.find({}).lean();
 
     const usersSerialize = JSON.parse(JSON.stringify(users));

@@ -1,13 +1,16 @@
-import connectToDB from "@/config/db";
+
 import {NextRequest, NextResponse} from "next/server";
-import {validateEmail} from "@/utility/auth";
 import {MongoServerError} from "mongodb";
 import User from "@/models/User";
 import {getCurrentUser} from "@/utility/getCurrentUser";
 
+import {updateProfileSchema} from "@/validator/userValidator";
+import connectToDB from "@/config/db";
+
 
 export async function GET() {
     try {
+        await connectToDB();
         const user = await getCurrentUser();
 
         if (!user) {
@@ -33,33 +36,26 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const body = await req.json();
 
-        if (
-            !body ||
-            typeof body !== "object" ||
-            Array.isArray(body)
-        ) {
+        await connectToDB();
+
+        const body = await req.json().catch(() => null);
+
+        const result = updateProfileSchema.safeParse(body);
+
+        if (!result.success) {
             return NextResponse.json(
-                { message: "اطلاعات ارسالی معتبر نیست" },
-                { status: 422 }
+                {
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                {
+                    status: 422,
+                }
             );
         }
 
-        const { fullName, email } = body;
-
-        if (
-            typeof fullName !== "string" ||
-            typeof email !== "string"
-        ) {
-            return NextResponse.json(
-                { message: "نام و ایمیل باید به‌صورت متن ارسال شوند" },
-                { status: 422 }
-            );
-        }
-
-        const cleanFullName = fullName.trim();
-        const cleanEmail = email.trim().toLowerCase();
+       const {fullName , email} = result.data
 
         const user = await getCurrentUser();
 
@@ -70,29 +66,9 @@ export async function PATCH(req: NextRequest) {
             );
         }
 
-        if (cleanFullName.length < 3 || cleanFullName.length > 50) {
-            return NextResponse.json(
-                { message: "نام شما باید بین ۳ تا ۵۰ کاراکتر باشد" },
-                { status: 422 }
-            );
-        }
-
-        if (!cleanEmail) {
-            return NextResponse.json(
-                { message: "ایمیل را وارد کنید" },
-                { status: 422 }
-            );
-        }
-
-        if (!validateEmail(cleanEmail)) {
-            return NextResponse.json(
-                { message: "ایمیل معتبر نمی‌باشد" },
-                { status: 422 }
-            );
-        }
 
         const existingUser = await User.findOne({
-            email: cleanEmail,
+            email,
             _id: { $ne: user._id },
         });
 
@@ -110,8 +86,8 @@ export async function PATCH(req: NextRequest) {
             },
             {
                 $set: {
-                    email: cleanEmail,
-                    fullName: cleanFullName,
+                    email,
+                    fullName,
                 },
             },
             {

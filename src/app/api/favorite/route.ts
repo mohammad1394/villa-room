@@ -3,6 +3,7 @@ import {NextRequest, NextResponse} from "next/server";
 import Villa from "@/models/Villa";
 import Favorite from "@/models/Favorite";
 import {checkRole} from "@/utility/checkRole";
+import {favoriteSchema} from "@/validator/favoriteValidator";
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,20 +15,24 @@ export async function POST(req: NextRequest) {
             return response;
         }
 
+        const body = await req.json().catch(() => null);
 
-        const body = await req.json();
-        const {villaId} = body;
+        const result = favoriteSchema.safeParse(body);
 
-        if (!villaId) {
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "لطفاً شناسه ویلا را وارد کنید",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
                 {
-                    status: 400,
+                    status: 422,
                 }
             );
         }
+
+        const { villaId } = result.data;
+
 
         const userId = user._id;
 

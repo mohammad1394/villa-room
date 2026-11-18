@@ -1,19 +1,12 @@
 import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
 import User from "@/models/User";
-
-import {isValidObjectId} from "mongoose";
-import {getCurrentUser} from "@/utility/getCurrentUser";
 import UserBan from "@/models/UserBan";
 import {checkRole} from "@/utility/checkRole";
+import {userBanSchema, userUnBanSchema} from "@/validator/userValidator";
+import {Params} from "@/types/Params";
 
 
-
-interface Params {
-    params: Promise<{
-        id: string;
-    }>;
-}
 
 export async function POST(
     req: NextRequest,
@@ -28,39 +21,33 @@ export async function POST(
             return response;
         }
 
-
         const {id} = await params;
 
-        if (!isValidObjectId(id)) {
+        const body = await req.json().catch(() => null);
+
+        const result = userBanSchema.safeParse({
+            userId : id,
+            reason : body?.resean,
+            bannedUntil : body?.bannedUntil,
+        })
+
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "شناسه کاربر معتبر نمی‌باشد!",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
-
-        const body = await req.json();
 
         const {
+            userId,
             reason,
             bannedUntil,
-        } = body;
+        } = result.data;
 
-        if (!reason?.trim()) {
-            return NextResponse.json(
-                {
-                    message: "علت مسدود کردن کاربر را وارد کنید!",
-                },
-                {
-                    status: 422,
-                }
-            );
-        }
-
-        const findUser = await User.findById(id);
+        const findUser = await User.findById(userId);
 
         if (!findUser) {
             return NextResponse.json(
@@ -103,8 +90,8 @@ export async function POST(
         const bannedUser = await UserBan.create({
             email: findUser.email,
             phone: findUser.phone,
-            reason: reason.trim(),
-            bannedUntil: bannedUntil || null,
+            reason,
+            bannedUntil,
             bannedBy: user._id,
             isActive: true,
         });
@@ -142,7 +129,7 @@ export async function PUT(
     try {
         await connectToDB();
 
-        const { user, response } = await checkRole(["Admin", "SuperAdmin"]);
+        const {  response } = await checkRole(["Admin", "SuperAdmin"]);
 
         if (response) {
             return response;
@@ -150,18 +137,23 @@ export async function PUT(
 
         const {id} = await params;
 
-        if (!isValidObjectId(id)) {
+        const result = userUnBanSchema.safeParse({
+            userId : id,
+        })
+
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "شناسه کاربر معتبر نمی‌باشد!",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                {
-                    status: 422,
-                }
+                { status: 422 }
             );
         }
 
-        const findUser = await User.findById(id);
+        const {userId} = result.data
+
+        const findUser = await User.findById(userId);
 
         if (!findUser) {
             return NextResponse.json(
@@ -174,16 +166,16 @@ export async function PUT(
             );
         }
 
-        if (findUser.status === "active") {
+        if (findUser.status !== "blocked") {
             return NextResponse.json(
                 {
-                    message: "این کاربر در حال حاضر فعال است!",
+                    message: "این کاربر در حال حاضر مسدود نیست!",
                 },
-                {
-                    status: 409,
-                }
+                { status: 409 }
             );
         }
+
+
 
         const ban = await UserBan.findOneAndUpdate(
             {
@@ -197,6 +189,15 @@ export async function PUT(
                 new: true,
             }
         );
+
+        if (!ban) {
+            return NextResponse.json(
+                {
+                    message: "رکورد مسدودی فعال برای این کاربر پیدا نشد!",
+                },
+                { status: 404 }
+            );
+        }
 
         findUser.status = "active";
         await findUser.save();
@@ -213,8 +214,6 @@ export async function PUT(
         );
 
     } catch (error) {
-        console.error("UNBAN USER ERROR:", error);
-
         return NextResponse.json(
             {
                 message: "خطای ناشناخته‌ای در سمت سرور رخ داده است!",

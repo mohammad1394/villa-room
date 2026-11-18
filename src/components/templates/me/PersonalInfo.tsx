@@ -1,23 +1,40 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import api from "@/lib/axios";
 import { showCustomToast } from "@/components/modules/layout/toast/toast";
-import { validateEmail } from "@/utility/auth";
+import {UpadatedProfileFormValues, updateProfileSchema} from "@/validator/userValidator";
 
 function PersonalInfo() {
+    const [marketingNotifications, setMarketingNotifications] =
+        useState(true);
 
-    const [marketingNotifications, setMarketingNotifications] = useState(true);
-    const [bookingNotifications, setBookingNotifications] = useState(true);
+    const [bookingNotifications, setBookingNotifications] =
+        useState(true);
 
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
-
     const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: {
+            errors,
+            isSubmitting,
+        },
+    } = useForm<UpadatedProfileFormValues>({
+        resolver: zodResolver(updateProfileSchema),
+        defaultValues: {
+            fullName: "",
+            email: "",
+        },
+        mode: "onBlur",
+    });
 
     useEffect(() => {
         const getPersonalInfo = async () => {
@@ -26,8 +43,11 @@ function PersonalInfo() {
 
                 const data = response.data;
 
-                setEmail(data.email ?? "");
-                setFullName(data.fullName ?? "");
+                reset({
+                    fullName: data.fullName ?? "",
+                    email: data.email ?? "",
+                });
+
                 setPhone(data.phone ?? "");
             } catch (error) {
                 showCustomToast(
@@ -42,48 +62,11 @@ function PersonalInfo() {
         };
 
         getPersonalInfo();
-    }, []);
+    }, [reset]);
 
-    const updateInfo = async () => {
-        if (!fullName.trim()) {
-            showCustomToast(
-                "خطا",
-                "لطفا نام خود را وارد کنید",
-                "x",
-                "error"
-            );
-            return;
-        }
-
-        if (!email.trim()) {
-            showCustomToast(
-                "خطا",
-                "لطفا ایمیل خود را وارد کنید",
-                "x",
-                "error"
-            );
-            return;
-        }
-
-        if (!validateEmail(email)) {
-            showCustomToast(
-                "خطا",
-                "ایمیل وارد شده معتبر نمی‌باشد",
-                "x",
-                "error"
-            );
-            return;
-        }
-
-        const updatedInfo = {
-            fullName: fullName.trim(),
-            email: email.trim().toLowerCase(),
-        };
-
+    const updateInfo = async (data: UpadatedProfileFormValues) => {
         try {
-            setIsSaving(true);
-
-            await api.patch("/api/auth/me", updatedInfo);
+            await api.patch("/api/auth/me", data);
 
             showCustomToast(
                 "موفق",
@@ -92,16 +75,14 @@ function PersonalInfo() {
                 "success"
             );
 
-
+            reset(data);
         } catch (error) {
             showCustomToast(
                 "خطا",
-                "در بروزرسانی اطلاعات یا خروج از حساب مشکلی رخ داد",
+                "در بروزرسانی اطلاعات مشکلی رخ داد",
                 "x",
                 "error"
             );
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -122,53 +103,70 @@ function PersonalInfo() {
                     اطلاعات شخصی
                 </h2>
 
-                <div className="grid grid-cols-1 gap-x-5 gap-y-5">
-                    <div>
-                        <label className="mb-2 block text-xs text-[#566575]">
-                            نام و نام خانوادگی
-                        </label>
-
-                        <input
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block text-xs text-[#566575]">
-                            ایمیل
-                        </label>
-
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-left text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block text-xs text-[#566575]">
-                            برای تغییر شماره موبایل به پشتیبانی تیکت بزنید
-                        </label>
-
-                        <input
-                            type="tel"
-                            disabled
-                            value={phone}
-                            className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
-                        />
-                    </div>
-                </div>
-
-                <button
-                    onClick={updateInfo}
-                    disabled={isSaving}
-                    className="mt-7 flex h-[50px] w-full items-center justify-center rounded-[10px] bg-[#17334d] px-8 text-sm font-medium text-white transition hover:bg-[#0c2438] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[200px]"
+                <form
+                    onSubmit={handleSubmit(updateInfo)}
+                    noValidate
                 >
-                    {isSaving ? "در حال ذخیره..." : "ذخیره تغییرات"}
-                </button>
+                    <div className="grid grid-cols-1 gap-x-5 gap-y-5">
+                        <div>
+                            <label className="mb-2 block text-xs text-[#566575]">
+                                نام و نام خانوادگی
+                            </label>
+
+                            <input
+                                {...register("fullName")}
+                                className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
+                            />
+
+                            {errors.fullName && (
+                                <p className="mt-2 text-xs text-red-500">
+                                    {errors.fullName.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-xs text-[#566575]">
+                                ایمیل
+                            </label>
+
+                            <input
+                                type="email"
+                                {...register("email")}
+                                className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-left text-sm text-[#17334d] transition outline-none focus:border-[#d9a13b]"
+                            />
+
+                            {errors.email && (
+                                <p className="mt-2 text-xs text-red-500">
+                                    {errors.email.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-xs text-[#566575]">
+                                برای تغییر شماره موبایل به پشتیبانی تیکت بزنید
+                            </label>
+
+                            <input
+                                type="tel"
+                                disabled
+                                value={phone}
+                                className="h-[48px] w-1/2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm text-[#17334d] transition outline-none disabled:bg-gray-50"
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="mt-7 flex h-[50px] w-full items-center justify-center rounded-[10px] bg-[#17334d] px-8 text-sm font-medium text-white transition hover:bg-[#0c2438] disabled:cursor-not-allowed disabled:opacity-60 sm:w-[200px]"
+                    >
+                        {isSubmitting
+                            ? "در حال ذخیره..."
+                            : "ذخیره تغییرات"}
+                    </button>
+                </form>
             </section>
 
             <section className="mt-6 overflow-hidden rounded-[16px] border border-gray-200 bg-white shadow-sm">
@@ -193,7 +191,7 @@ function PersonalInfo() {
                     <button
                         type="button"
                         onClick={() =>
-                            setMarketingNotifications(!marketingNotifications)
+                            setMarketingNotifications((prev) => !prev)
                         }
                         className={`relative h-[28px] w-[50px] shrink-0 rounded-full transition ${
                             marketingNotifications
@@ -226,7 +224,7 @@ function PersonalInfo() {
                     <button
                         type="button"
                         onClick={() =>
-                            setBookingNotifications(!bookingNotifications)
+                            setBookingNotifications((prev) => !prev)
                         }
                         className={`relative h-[28px] w-[50px] shrink-0 rounded-full transition ${
                             bookingNotifications

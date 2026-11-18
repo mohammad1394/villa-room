@@ -3,6 +3,7 @@ import ContactSection from "@/components/templates/contact-us/ContactSection";
 import ContactMethods from "@/components/templates/contact-us/ContactMethod";
 import ContactFAQ from "@/components/templates/contact-us/ContactFAQ";
 import ContactCTA from "@/components/templates/contact-us/ContactCTA";
+import Register from "@/app/(site)/contact-us/Register";
 
 
 export default function ContactPage() {

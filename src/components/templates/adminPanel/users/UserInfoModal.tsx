@@ -94,28 +94,14 @@ interface UserInfoModalProps {
                         <select
                             className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-700 outline-none"
                         >
+                            <option value="superAdmin">
+                               مدیر ارشد
+                            </option>
                             <option value="Admin">
                                 مدیر
                             </option>
                             <option value="User">
                                 کاربر
-                            </option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                            وضعیت حساب
-                        </label>
-
-                        <select
-                            className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-700 outline-none"
-                        >
-                            <option value="active">
-                                فعال
-                            </option>
-                            <option value="disable">
-                                غیر فعال
                             </option>
                         </select>
                     </div>

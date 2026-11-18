@@ -1,18 +1,11 @@
 import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
-import {isValidObjectId} from "mongoose";
 import Ticket from "@/models/Ticket";
 import {checkRole} from "@/utility/checkRole";
-
-const validStatuses = [
-    "open",
-    "pending",
-    "answered",
-    "closed",
-];
+import {changeTicketStatusSchema} from "@/validator/ticketValidator";
 
 export async function PUT(
-    req: NextRequest,
+    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
@@ -25,31 +18,27 @@ export async function PUT(
         }
 
         const { id } = await params;
-        const { status } = await req.json();
 
-        if (!isValidObjectId(id)) {
+        const body = await request.json().catch(() => null);
+
+        const result = changeTicketStatusSchema.safeParse({
+            ticketId : id,
+            ticketStatus : body?.status
+        });
+
+        if (!result.success) {
             return NextResponse.json(
                 {
-                    message: "شناسه تیکت نامعتبر است.",
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
                 },
-                {
-                    status: 400,
-                }
+                { status: 422 }
             );
         }
 
-        if (!validStatuses.includes(status)) {
-            return NextResponse.json(
-                {
-                    message: "وضعیت انتخاب شده معتبر نیست.",
-                },
-                {
-                    status: 400,
-                }
-            );
-        }
+        const { ticketId, ticketStatus } = result.data;
 
-        const ticket = await Ticket.findById(id);
+        const ticket = await Ticket.findById(ticketId);
 
         if (!ticket) {
             return NextResponse.json(
@@ -62,7 +51,7 @@ export async function PUT(
             );
         }
 
-        ticket.status = status;
+        ticket.status = ticketStatus;
 
         await ticket.save();
 

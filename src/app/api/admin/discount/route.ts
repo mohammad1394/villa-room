@@ -1,10 +1,9 @@
 import {NextRequest, NextResponse} from "next/server";
 import connectToDB from "@/config/db";
-import {isValidObjectId} from "mongoose";
 import Villa from "@/models/Villa";
 import Discount from "@/models/Discount";
-import {getCurrentUser} from "@/utility/getCurrentUser";
 import {checkRole} from "@/utility/checkRole";
+import {createDiscountSchema} from "@/validator/discountValidator";
 
 export async function POST(req: NextRequest) {
     try {
@@ -16,7 +15,19 @@ export async function POST(req: NextRequest) {
             return response;
         }
 
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
+
+        const result = createDiscountSchema.safeParse(body);
+
+        if (!result.success) {
+            return NextResponse.json(
+                {
+                    message: "اطلاعات ارسالی معتبر نیست",
+                    errors: result.error.flatten().fieldErrors,
+                },
+                { status: 422 }
+            );
+        }
 
         const {
             code,
@@ -24,23 +35,9 @@ export async function POST(req: NextRequest) {
             maxUse,
             expire,
             percent,
-        } = body;
+        } = result.data;
 
 
-
-        if (!code || !code.trim()) {
-            return NextResponse.json(
-                {message: "کد تخفیف را وارد کنید"},
-                {status: 422}
-            );
-        }
-
-        if (!villaId || !isValidObjectId(villaId)) {
-            return NextResponse.json(
-                {message: "شناسه ویلا معتبر نمی‌باشد"},
-                {status: 422}
-            );
-        }
 
         const villa = await Villa.findById(villaId);
 
@@ -51,37 +48,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (!Number.isInteger(maxUse) || maxUse < 1) {
-            return NextResponse.json(
-                {message: "تعداد استفاده مجاز معتبر نمی‌باشد"},
-                {status: 422}
-            );
-        }
-
-        const expireDate = new Date(expire);
-
-        if (isNaN(expireDate.getTime()) || expireDate <= new Date()) {
-            return NextResponse.json(
-                {message: "تاریخ انقضای کد تخفیف معتبر نمی‌باشد"},
-                {status: 422}
-            );
-        }
-
-        if (
-            !Number.isFinite(percent) ||
-            percent < 1 ||
-            percent > 100
-        ) {
-            return NextResponse.json(
-                {message: "درصد تخفیف معتبر نمی‌باشد"},
-                {status: 422}
-            );
-        }
-
-        const normalizedCode = code.trim().toUpperCase();
 
         const existingDiscount = await Discount.findOne({
-            code: normalizedCode,
+            code
         });
 
         if (existingDiscount) {
@@ -92,11 +61,11 @@ export async function POST(req: NextRequest) {
         }
 
         await Discount.create({
-            code: normalizedCode,
+            code,
             userId : user._id,
             villaId,
             maxUse,
-            expire: expireDate,
+            expire,
             percent,
         });
 
