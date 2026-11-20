@@ -10,7 +10,9 @@ export async function GET( req : NextRequest , {params} : Params) {
 
         const { id } = await params;
 
-        const result = villaInfoQuerySchema.safeParse(id)
+        const result = villaInfoQuerySchema.safeParse({
+            villaId: id,
+        })
 
         if (!result.success) {
             return NextResponse.json(
