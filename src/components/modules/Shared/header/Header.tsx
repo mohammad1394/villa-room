@@ -10,6 +10,7 @@ import {cookies} from "next/headers";
 import {verifyAccessToken} from "@/utility/auth";
 import UserModel from "@/models/User";
 import {notFound} from "next/navigation";
+import MobileMenu from "@/components/modules/Shared/header/MobileMenu";
 
 export interface Root {
     _id: string
@@ -42,9 +43,7 @@ async function Header() {
             <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-8 ">
 
                 <div className={"flex md:hidden"}>
-                    <Menu
-                     size={30}
-                    />
+                    <MobileMenu />
                 </div>
                 {/* Logo */}
                 <Link href="/" className="hidden md:flex justify-center items-center">
@@ -63,6 +62,9 @@ async function Header() {
 
                 {/* Navbar */}
                  <Navbar/>
+
+
+
 
                 {/* Actions */}
                <NavbarActions user = {user}/>
