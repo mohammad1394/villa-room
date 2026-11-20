@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Create villa error:", error);
+
 
         return NextResponse.json(
             {

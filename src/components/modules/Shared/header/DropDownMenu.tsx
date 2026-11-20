@@ -44,7 +44,6 @@ function DropDownMenu({isOpen, setIsOpen, user}: NavbarActionsProps) {
                     "check",
                     "success"
                 );
-                console.log("hello")
                 router.refresh();
             }
         } catch (error) {

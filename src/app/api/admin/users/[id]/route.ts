@@ -109,7 +109,7 @@ export async function POST(
             }
         );
     } catch (error) {
-        console.error("BAN USER ERROR:", error);
+
 
         return NextResponse.json(
             {

@@ -53,7 +53,6 @@ function Register() {
         if (!isDirty){
             alert("فیلدی تغییر داده نشده است")
         }
-        console.log(data)
         reset()
     };
 

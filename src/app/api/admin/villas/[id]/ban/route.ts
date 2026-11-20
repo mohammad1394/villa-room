@@ -101,7 +101,7 @@ export async function POST(
             { status: 201 }
         );
     } catch (error) {
-        console.error("BAN VILLA ERROR:", error);
+
 
         return NextResponse.json(
             {
@@ -195,7 +195,7 @@ export async function PUT(
             { status: 200 }
         );
     } catch (error) {
-        console.error("UNBAN VILLA ERROR:", error);
+
 
         return NextResponse.json(
             {
@@ -261,7 +261,7 @@ export async function DELETE(
             { status: 200 }
         );
     } catch (error) {
-        console.error("DELETE VILLA ERROR:", error);
+
 
         return NextResponse.json(
             {

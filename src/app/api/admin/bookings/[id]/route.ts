@@ -8,8 +8,6 @@ import {bookingChangeStatusSchema} from "@/validator/bookingValidator";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
-// "cancelled" and "completed" are final: a cancelled booking cannot be revived,
-// because its dates may already be booked by someone else.
 const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
     pending: ["confirmed", "cancelled"],
     confirmed: ["pending", "completed", "cancelled"],
@@ -143,7 +141,6 @@ export async function PUT(req: NextRequest, {params}: { params: Promise<{ id: st
             );
         }
 
-        console.error("ADMIN CHANGE BOOKING STATUS ERROR:", error);
 
         return NextResponse.json(
             {message: "خطایی در تغییر وضعیت رزرو رخ داد."},

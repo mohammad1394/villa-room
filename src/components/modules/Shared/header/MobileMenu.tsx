@@ -16,6 +16,16 @@ const menuItems = [
         icon: Building2,
     },
     {
+        title: "ورود",
+        href: "/login",
+        icon: Home,
+    },
+    {
+        title: "ثبت نام",
+        href: "/register",
+        icon: Home,
+    },
+    {
         title: "راهنما",
         href: "/guide",
         icon: HelpCircle,

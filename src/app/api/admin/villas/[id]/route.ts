@@ -108,7 +108,7 @@ export async function PUT(
         );
 
     } catch (error) {
-        console.error("UPDATE VILLA ERROR:", error);
+
 
         return NextResponse.json(
             {
